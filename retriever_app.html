@@ -1,0 +1,1664 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Network Progress Report</title>
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.11.2/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.rawgit.com/jpswalsh/academicons/master/css/academicons.min.css">
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+</head>
+
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="#">Network Progress Report</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+      aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link" id="summary-tab" data-toggle="tab" href="#summary">Overall Summary</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="publications-tab" data-toggle="tab" href="#publications">Individual Publications</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="catalog-tab" data-toggle="tab" href="#catalog">Data Catalog</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="trials-tab" data-toggle="tab" href="#trials">Clinical Trials Catalog</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="software-tab" data-toggle="tab" href="#software">Software Catalog</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Tab Content -->
+  <div class="tab-content mt-3">
+    <!-- Overall Summary Tab -->
+    <div class="tab-pane fade show active" id="summary" role="tabpanel" aria-labelledby="summary-tab">
+      <div class="container">
+        <h2>Overall Summary</h2>
+        <p>This page provides an overview of the network progress.</p>
+        <div class="row">
+          <div class="col-sm-2">
+              <div style="font-size: 18px; text-align: center;"><strong>Grants</strong></div>
+              <div style="font-size: 18px; text-align: center;" id="totalGrantsDiv">0</div>
+          </div>
+          <div class="col-sm-2">
+              <div style="font-size: 18px; text-align: center;"><strong>Publications</strong></div>
+              <div style="font-size: 18px; text-align: center;" id="totalPublicationsDiv">0</div>
+          </div>
+          <div class="col-sm-2">
+              <div style="font-size: 18px; text-align: center;"><strong>Citations</strong></div>
+              <div style="font-size: 18px; text-align: center;" id="totalCitationsDiv">0</div>
+          </div>
+          <div class="col-sm-2">
+              <div style="font-size: 18px; text-align: center;"><strong>Datasets</strong></div>
+              <div style="font-size: 18px; text-align: center;" id="pub-count">0</div>
+          </div>
+          <div class="col-sm-2">
+              <div style="font-size: 18px; text-align: center;"><strong>Data Samples</strong></div>
+              <div style="font-size: 18px; text-align: center;" id="samples-count">7414</div>
+          </div>
+        </div>
+        <!-- <div id="totalGrantsDiv"></div>
+        <div id="totalPublicationsDiv"></div>
+        <div id="totalCitationsDiv"></div> -->
+        <div id="grant-pubs-plot"></div>
+        <div id="grant-citn-plot"></div>
+        <h3>Grant Collaboration Network</h3>
+        <div id="mynetwork" seamless width="100%" style="height:600px; border: none"></div>
+        <table id="grantDataTable" class="display" style="width:100%">
+          <thead>
+            <tr>
+                <th>Grant</th>
+                <th>Total Publications</th>
+                <th>Total Citations</th>
+            </tr>
+        </thead>
+        </table>
+
+      </div>
+    </div>
+
+    <!-- Individual Publications Tab -->
+    <div class="tab-pane fade" id="publications" role="tabpanel" aria-labelledby="publications-tab">
+      <div class="container">
+        <h2>Individual Publications</h2>
+        <p>This page displays information about individual publications.</p>
+        <div class="row">
+        <div class="col-sm-6">
+            <div id="pub-pubs-plot"></div>
+        </div>
+        <div class="col-sm-6">
+          <div id="pub-citn-plot"></div>
+        </div>
+        </div>
+        <table id="pubData" class="table-striped" width="100%">
+          <thead>
+              <tr>
+                  <th>PubMed ID</th>
+                  <th>Title</th>
+                  <th>Citations</th>
+              </tr>
+          </thead>
+      </table>
+      </div>
+    </div>
+
+    <!-- Data Catalog Tab -->
+    <div class="tab-pane fade" id="catalog" role="tabpanel" aria-labelledby="catalog-tab">
+      <div class="container">
+        <h2>Data Catalog</h2>
+        <p>This page provides a catalog of available data.</p>
+        <!-- <div id="catalog-plot"></div> -->
+
+        <div class="row">
+          <div class="col-sm-2">
+              <!-- <div style="font-size: 18px; text-align: center;"><strong>Cases</strong></div>
+              <div style="font-size: 18px; text-align: center;" id="case-count">0</div> -->
+          </div>
+          <div class="col-sm-2">
+              <div style="font-size: 18px; text-align: center;"><strong>Datasets</strong></div>
+              <div style="font-size: 20px; text-align: center;" id="pub-count2">0</div>
+          </div>
+          <!-- <div class="col-sm-2">
+              <div style="font-size: 18px; text-align: center;"><strong>Samples</strong></div>
+              <div style="font-size: 20px; text-align: center;" id="sample-count">0</div>
+          </div> -->
+          <div class="col-sm-2">
+              <div style="font-size: 18px; text-align: center;"><strong>SRA</strong></div>
+              <div style="font-size: 20px; text-align: center;" id="sra-count">0</div>
+          </div>
+          <div class="col-sm-2">
+              <div style="font-size: 18px; text-align: center;"><strong>GEO</strong></div>
+              <div style="font-size: 20px; text-align: center;" id="geo-count">0</div>
+          </div>
+          <div class="col-sm-2">
+              <!-- <div style="font-size: 18px; text-align: center;"><strong>dbGAP</strong></div>
+              <div style="font-size: 20px; text-align: center;" id="dbgap-count">0</div> -->
+          </div>
+      </div>
+      <div class="row">
+          <div class="col-sm-6">
+              <div id='cancer_types_data_types_plot'><!-- Plotly chart will be drawn inside this DIV --></div>
+          </div>
+          <div class="col-sm-3">
+              <div id='cancer_types_plot'><!-- Plotly chart will be drawn inside this DIV --></div>
+          </div>
+          <div class="col-sm-3">
+              <div id='data_types_plot'><!-- Plotly chart will be drawn inside this DIV --></div>
+          </div>
+      </div>
+      <hr class="shadow" style="margin-top: 0; padding-top: 0; margin-bottom: 10px; padding-bottom: 10px;">
+      <div class="row">
+         <div class="col-sm-2">
+             <div>
+                 <a data-toggle="collapse" href="#search-collapse">
+                     <label class="form-check-label"><strong>Search Data</strong></label>
+                     <i id= "search_caret" class="indicator fa fa-caret-down" aria-hidden="true" aria-expanded="false"></i> 
+                 </a>
+             </div>
+             <div id="search-collapse" class="panel-collapse collapse">
+                 <div>
+                     <input class="form-control" id="search_bar" type="text" placeholder="Search data...">
+                     <!-- {% comment %} <span id="searchclear" class="glyphicon glyphicon-remove-circle" onclick="clear_search()"></span> {% endcomment %} -->
+                     <!-- <span id="searchclear" class="glyphicon glyphicon-remove-circle" onclick="clear_search()"></span> -->
+                 </div>
+                 <div style="padding-top: 10px;">
+                     <button type="button" class="btn btn-primary" onclick="clear_search()">Clear Search</button>
+                 </div>
+                 <div style="padding-top: 10px; padding-bottom: 10px; font-size: 10px;">
+                     The search bar works separately from other filters. Use this to find text within the description or designs. Clear the search before using other filters.
+                 </div>
+             </div>
+         </div>
+         <div class="col-sm-3">
+             <div class="form-check">
+                 <input style="margin: 0; padding: 0;" type="checkbox" class="form-check-input" id="parent_check_cancer_type" onchange="handleCheck(this, 'cancer-type-multicheck')" checked>
+                   <a data-toggle="collapse" href="#cancer-type-multicheck">
+                         <label class="form-check-label" for="parent_check_cancer_type"><strong>Cancer Type</strong></label>
+                         <i id="cancer_type_caret" class="indicator fa fa-caret-down" aria-hidden="true" aria-expanded="false"></i> 
+                     </a>
+             </div>
+             <div id="cancer-type-multicheck" style="overflow: auto; max-height: 170px;" class="panel-collapse collapse">
+             </div>
+         </div>
+         <div class="col-sm-3">
+             <div class="form-check">
+                 <input style="margin: 0; padding: 0;" type="checkbox" class="form-check-input" id="parent_check_data_type" onchange="handleCheck(this, 'data-type-multicheck')" checked>
+                     <a data-toggle="collapse" href="#data-type-multicheck">
+                         <label class="form-check-label" for="parent_check_data_type"><strong>Data Type</strong></label>
+                         <i id="data_type_caret" class="indicator fa fa-caret-down" aria-hidden="true" aria-expanded="false"></i> 
+                     </a>
+                 <!-- {% comment %} <span style="margin: 0; padding-left: 100px;"><strong>Count</strong></span> {% endcomment %} -->
+                 <!-- <span style="margin: 0; padding-left: 100px;"><strong>Count</strong></span> -->
+             </div>
+             <div id="data-type-multicheck" style="overflow: auto; max-height: 170px;" class="panel-collapse collapse">
+             </div>
+         </div>
+         <!-- <div class="col-sm-2">
+             <div class="form-check">
+                 <input style="margin: 0; padding 0;" type="checkbox" class="form-check-input" id="parent_check_consortium" onchange="handleCheck(this, 'consortium-multicheck')" checked>
+                 <a data-toggle="collapse" href="#consortium-multicheck">
+                     <label class="form-check-label" for="parent_check_consortium"><strong>Consortium</strong></label>
+                     <i id="consortium_caret" class="indicator fa fa-caret-down" aria-hidden="true" aria-expanded="false"></i> 
+                 </a>
+                 
+                 {% comment %} <span style="margin: 0; padding-left: 100px;"><strong>Count</strong></span> {% endcomment %}
+             </div>
+             <div id="consortium-multicheck" style="overflow: auto; max-height: 170px;" class="panel-collapse collapse">
+             </div>
+         </div> -->
+         <div class="col-sm-2">
+             <div class="form-check">
+                 <input style="margin: 0; padding: 0;" type="checkbox" class="form-check-input" id="parent_check_organism" onchange="handleCheck(this, 'organism-multicheck')" checked>
+                 <a data-toggle="collapse" href="#organism-multicheck">
+                     <label class="form-check-label" for="parent_check_organism"><strong>Organism</strong></label>
+                     <i id="organism_caret" class="indicator fa fa-caret-down" aria-hidden="true"></i> 
+                 </a>
+                 <!-- {% comment %} <span style="margin: 0; padding-left: 100px;"><strong>Count</strong></span> {% endcomment %} -->
+             </div>
+             <div id="organism-multicheck" style="overflow: auto; height: 170px;" class="panel-collapse collapse">
+             </div>
+         </div>
+     </div>
+     <hr style="margin-bottom: 0; padding-bottom: 0; margin-top: 0; padding-top: 0;">
+      <div class="row">
+         <div class="col-sm-12"><br>
+          <table id="table_id" class="table-striped">
+            <thead>
+                <tr>
+                    <th>Title/Description</th>
+                    <th>Study Design</th>
+                    <th>Data Portals</th>
+                    <th>Citations</th>
+                    <th>Network</th>
+                    <th>Cancer Type</th>
+                    <th>Data Type</th>
+                    <th>Organism</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+         </div>
+      </div>
+
+      </div>
+    </div>
+
+    <!-- Clinical Trials Tab -->
+    <div class="tab-pane fade" id="trials" role="tabpanel" aria-labelledby="trials-tab">
+        <div class="container">
+          <h2>Clinical Trials Catalog</h2>
+          <p>This page displays information about clinical trials.</p>
+          <table id="trialsData" class="table-striped" width="100%">
+            <thead>
+                <tr>
+                    <th>NCT ID</th>
+                    <th>PubMed ID</th>
+                    <th>Title</th>
+                    <th>Phase</th>
+                </tr>
+            </thead>
+        </table>
+        </div>
+      </div>
+    <!-- Software/Github Tab -->
+    <div class="tab-pane fade" id="software" role="tabpanel" aria-labelledby="software-tab">
+        <div class="container">
+          <h2>Software Catalog</h2>
+          <p>This page displays information about software.</p>
+          <table id="githubData" class="table-striped" width="100%">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>License</th>
+                    <th>Version</th>
+                    <th>PubMed ID</th>
+                </tr>
+            </thead>
+        </table>
+        </div>
+      </div>
+
+
+
+
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.6/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script src="https://cdn.datatables.net/1.11.2/js/jquery.dataTables.min.js"></script>
+
+  <script src="JSON_data/pub_cite.json"></script>
+  <script src="JSON_data/clinical_trials.json"></script>
+  <script src="JSON_data/software_catalog.json"></script>
+  <script src="JSON_data/data_catalog.json"></script>
+
+  <!-- Plotly.js -->
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+  <script>
+   $(document).ready(function() {
+      $('.nav-link').on('click', function(e) {
+        e.preventDefault();
+        $(this).tab('show');
+      });
+
+      // To allow re-clicking on active tabs
+      $('.nav-link').on('shown.bs.tab', function(e) {
+        if ($(e.target).hasClass('active')) {
+          $(e.target).removeClass('active');
+        }
+      });
+    
+  //  try this plot:
+  // grant plots (or over all)
+  // Counting the total number of citations and publications for each grant
+  const grantCitationCounts = {};
+  const grantPublicationCounts = {};
+
+  Object.values(pub_cite_data).forEach(element => {
+    const grants = element.grant.split(';');
+    const citationCount = element.citation_count;
+
+    grants.forEach(grant => {
+      if (grantCitationCounts.hasOwnProperty(grant)) {
+        grantCitationCounts[grant] += citationCount;
+        grantPublicationCounts[grant]++;
+      } else {
+        grantCitationCounts[grant] = citationCount;
+        grantPublicationCounts[grant] = 1;
+      }
+    });
+  });
+
+  // Extracting the grants, citation counts, and publication counts as separate arrays
+  const grants = Object.keys(grantCitationCounts);
+  const gcitationCounts = Object.values(grantCitationCounts);
+  const gpublicationCounts = Object.values(grantPublicationCounts);
+
+  // Creating a trace for total citations bar plot
+  const citationTrace = {
+    x: grants,
+    y: gcitationCounts,
+    type: 'bar',
+    name: 'Total Citations'
+  };
+
+  // Creating the layout for the citations bar plot
+  const citationLayout = {
+    title: 'Total Citations by Grant',
+    xaxis: {
+      title: 'Grant'
+    },
+    yaxis: {
+      title: 'Count'
+    }
+  };
+
+  // Creating a trace for total publications bar plot
+  const publicationTrace = {
+    x: grants,
+    y: gpublicationCounts,
+    type: 'bar',
+    name: 'Total Publications'
+  };
+
+  // Creating the layout for the publications bar plot
+  const publicationLayout = {
+    title: 'Total Publications by Grant',
+    xaxis: {
+      title: 'Grant'
+    },
+    yaxis: {
+      title: 'Count'
+    }
+  };
+
+    // Plotting the citations bar plot
+    Plotly.newPlot('grant-citn-plot', [citationTrace], citationLayout);
+
+    // Plotting the publications bar plot
+    Plotly.newPlot('grant-pubs-plot', [publicationTrace], publicationLayout);
+
+    // Calculating the total number of grants, publications, and citations
+    const totalGrants = grants.length;
+    const totalPublications = gpublicationCounts.reduce((a, b) => a + b, 0);
+    const totalCitations = gcitationCounts.reduce((a, b) => a + b, 0);
+
+    // Displaying the total counts in separate div elements
+    const totalGrantsDiv = document.getElementById('totalGrantsDiv');
+    totalGrantsDiv.innerHTML = `${totalGrants}`;
+
+    const totalPublicationsDiv = document.getElementById('totalPublicationsDiv');
+    totalPublicationsDiv.innerHTML = `${totalPublications}`;
+
+    const totalCitationsDiv = document.getElementById('totalCitationsDiv');
+    totalCitationsDiv.innerHTML = `${totalCitations}`;
+
+  // grant datatable
+  const tableData = grants.map((grant, index) => {
+  return {
+    Grant: grant,
+    'Total Publications': gpublicationCounts[index],
+    'Total Citations': gcitationCounts[index]
+  };
+});
+
+$(document).ready(function() {
+  $('#grantDataTable').DataTable({
+    data: tableData,
+    columns: [
+      { data: 'Grant' },
+      { data: 'Total Publications' },
+      { data: 'Total Citations' }
+    ]
+  });
+});
+
+
+    // publications plot - cumulative total
+    const publicationCountByYear = {};
+    const cumulativePublicationCounts = {};
+
+    Object.values(pub_cite_data).forEach(element => {
+    const year = element.year.toString();
+    if (publicationCountByYear.hasOwnProperty(year)) {
+        publicationCountByYear[year]++;
+    } else {
+        publicationCountByYear[year] = 1;
+    }
+    });
+
+    let cumulativeCount = 0;
+
+    // Calculate cumulative counts correctly
+    const years = Object.keys(publicationCountByYear).sort(); // Sort years chronologically
+    years.forEach(year => {
+    cumulativeCount += publicationCountByYear[year];
+    cumulativePublicationCounts[year] = cumulativeCount;
+    });
+
+    // Extracting the years and cumulative counts as separate arrays
+    const cumulativeCounts = years.map(year => cumulativePublicationCounts[year]);
+    console.log(years)
+    // Creating a trace for the cumulative line plot
+    const pubTrace = {
+    x: years,
+    y: cumulativeCounts,
+    type: 'scatter',
+    name: 'Cumulative Total'
+    };
+
+    // Creating the layout for the cumulative line plot
+    const pubLayout = {
+    title: 'Cumulative Total Number of Publications by Year',
+    width: 600,
+    height: 400,
+    xaxis: {
+        title: 'Year',
+        tickmode: 'linear'
+    },
+    yaxis: {
+        title: 'Cumulative Publication Count'
+    }
+    };
+
+      // Creating the data array with the trace
+      const pubData = [pubTrace];
+
+      // Citations plot
+      // Counting the total number of citations for each year
+      const citationCountByYear = {};
+      Object.values(pub_cite_data).forEach(element => {
+        const year = element.year.toString();
+        const citationCount = element.citation_count;
+        if (citationCountByYear.hasOwnProperty(year)) {
+          citationCountByYear[year] += citationCount;
+        } else {
+          citationCountByYear[year] = citationCount;
+        }
+      });
+
+      // Extracting the years and citation counts as separate arrays
+      const citnYears = Object.keys(citationCountByYear);
+      const citationCounts = Object.values(citationCountByYear);
+
+      // Creating a trace for the bar plot
+      const citnTrace = {
+        x: citnYears,
+        y: citationCounts,
+        type: 'bar'
+      };
+
+      // Creating the layout for the bar plot
+      const citnLayout = {
+        title: 'Total Number of Citations by Year',
+        width: 600,
+        height: 400,
+        // xaxis: {
+        //   title: 'Year'
+        // },
+        yaxis: {
+          title: 'Citation Count'
+        }
+      };
+
+      // Creating the data array with the trace
+      const citnData = [citnTrace];
+
+
+
+
+      // Plotting the bar plot
+      
+      Plotly.newPlot('pub-citn-plot', citnData, citnLayout);
+      Plotly.newPlot('pub-pubs-plot', pubData, pubLayout);
+   
+
+        const pub_columns = [
+          {title: "PubMed ID", data: "pubMedID"},
+          {title: "Title", data: "title"},
+          {title: "Citations", data: "citation_count"}
+        ];
+        $('#pubData').DataTable({
+          data: Object.values(pub_cite_data),
+          columns: pub_columns
+        })
+
+    });
+
+    const trials_columns = [
+
+          {title: "NCT ID", data: "nct_id"},
+          {title: "PubMed ID", data: "pmid"},
+          {title: "Title", data: "ct_title",
+           render: function (data, type, row) {
+            // Check if the type is 'display' to render the custom element
+            if (type === 'display') {
+                return `<div class="name-cell" title="${row.ct_summary}">${data}</div>`;
+            }
+            // Return the plain data for sorting and filtering
+            return data;
+            }
+        
+            },
+          {title: "Phase", data: "ct_phase"},
+        ];
+        $('#trialsData').DataTable({
+          data: Object.values(trials_data),
+          columns: trials_columns
+        })
+        $('#trialsData').on('click', '.name-cell', function () {
+            // Get the description from the title attribute
+            var description = $(this).attr('title');
+            
+            // Display the description (you can customize this to show a tooltip or popup)
+            alert(description);
+        });
+    const github_columns = [
+
+          {title: "Name", data: "repo_name",
+          render: function (data, type, row) {
+            // Check if the type is 'display' to render the link
+            if (type === 'display') {
+                return `<a href="${row.github_link}">${data}</a>`;
+            }
+            // Return the plain data for sorting and filtering
+            return data;
+            }
+            },
+          {title: "Description", data: "description"},
+          {title: "License", data: "license"},
+          {title: "Version", data: "version"},
+          {title: "PubMed ID", data: "pmid",
+          render: function (data, type, row) {
+            // Check if the type is 'display' to render the link
+            if (type === 'display') {
+                return `<a href="https://pubmed.ncbi.nlm.nih.gov/${row.pmid}/">${data}</a>`;
+            }
+            // Return the plain data for sorting and filtering
+            return data;
+            }
+            },
+        ];
+        $('#githubData').DataTable({
+          data: Object.values(github_data),
+          columns: github_columns
+        })
+  
+  </script>
+<!-- data catalog script -->
+<script>
+  function defer(method) {
+      if (window.jQuery) {
+          method();
+      } else {
+          setTimeout(function () {
+              defer(method)
+          }, 50);
+      }
+  }
+
+  function checkAll(divid) {
+      var checks = document.querySelectorAll('#' + divid + ' input[type="checkbox"]');
+      for(var i =0; i< checks.length;i++){
+          var check = checks[i];
+          if(!check.disabled){
+              check.checked = true;
+          }
+      }   
+  }
+
+  function checkFilter(divid, parent_id, filter) {
+      $('input:checkbox[id="' + parent_id + '"]').prop('checked', false);
+      var checks = document.querySelectorAll('#' + divid + ' input[type="checkbox"]');
+      for(var i =0; i< checks.length;i++){
+          var check = checks[i];
+          var id = check.id.split('_').join(' ');
+          if(!check.disabled && filter === id){
+              check.checked = true;
+          } else {
+              check.checked = false;
+          }
+      }   
+  }
+
+  function handleCheck(parent_check, divid) {
+      var checks = document.querySelectorAll('#' + divid + ' input[type="checkbox"]');
+      if(parent_check.checked == true){
+          for(var i =0; i< checks.length;i++){
+              var check = checks[i];
+              if(!check.disabled){
+                  check.checked = true;
+              }
+          }
+      } else {
+          for(var i =0; i< checks.length;i++){
+              var check = checks[i];
+              if(!check.disabled){
+                  check.checked = false;
+              }
+          }
+      }
+      filter_cancer_types_check()
+      filter_organism_check()
+      filter_data_types_check()
+      // filter_networks_check()
+  }
+
+  function get_popover(data, title) {
+      if (!data) {
+          return ''
+      }
+      return '<a href="#!" container="body" data-placement="auto" tabindex="0" data-trigger="click" data-toggle="popover" title="' + title + '" data-content="' + data + '">' + data + '</a>';
+  }
+
+  function get_title_popover(data, description) {
+      if (data === '-') {
+          return data
+      }
+      return '<a href="#!" tabindex="0" container="body" data-placement="auto" data-trigger="click" data-toggle="popover" title="' + data + '" data-content="' + description + '">' + data + '</a>';
+  }
+
+  function get_keyword_links(data) {
+      if (data === '-') {
+          return data
+      }
+      let words = data.split(';');
+      let links = "";
+      for (let i=0; i < words.length; i++) {
+          if (words.length === 1) {
+              links = '<a onclick="filter(\'' + words[i].trim() + '\')" href="#!">' + words[i].trim() + '</a>'
+          } else if (words.length - 1 === i) {
+              links = links + '<a onclick="filter(\'' + words[i].trim() + '\')" href="#!">' + words[i].trim() + '</a>'
+          } else {
+              links = links + '<a onclick="filter(\'' + words[i].trim() + '\')" href="#!">' + words[i].trim() + '</a>; '
+          }
+      }
+      return links
+  }
+
+  function get_keywords(data) {
+      let words = data.split(';');
+      let out = [];
+      for (let i = 0; i < words.length; i++) {
+          out.push(words[i].trim())
+      }
+      return out
+  }
+
+  function get_citation_link(pubmed) {
+      let link = '<span>';
+      let string_proc = "";
+      if (pubmed !== '-' && pubmed !== undefined) {
+          string_proc = ' <a href="https://pubmed.ncbi.nlm.nih.gov/' + pubmed + '" target="_blank"><i class="ai ai-pubmed"></i></a>';
+          link = link + string_proc;
+      } else {
+          string_proc = ' <i class="fa ai ai-pubmed"></i>';
+          link = link + string_proc;
+      }
+      link = link + '</span>';
+      return link
+  }
+
+  // function get_network_link(network) {
+  //     let link = network;
+  //     switch (network) {
+  //         case 'DRSN':
+  //             link = "<a href='https://www.drsnmoonshot.org' target ='_blank'>" + network + "</a>"
+  //             break;
+  //         case 'IOTN':
+  //             link = "<a href='https://www.iotnmoonshot.org' target ='_blank'>" + network + "</a>"
+  //             break;
+  //     }
+  //     return link
+  // }
+
+  // function extract_network(network) {
+  //     if (network == "") {
+  //         return ""
+  //     }
+  //     return network.split('>')[1].replace('</a', '').trim()
+  // }
+
+  function generate_data_views(geo, sra, dbgap) {
+      let cell = '';
+      if (geo !== '-' && geo !== '' && geo !== undefined && geo !== null) {
+          cell = cell + '<a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=' + geo + '" target="_blank">GEO</a><br>'
+      }
+      if (sra !== '-' && sra  !== '' && sra !== undefined && sra !== null) {
+          cell = cell + '<a href="https://trace.ncbi.nlm.nih.gov/Traces/sra/?study=' + sra + '" target="_blank">SRA</a><br>'
+      }
+      if (dbgap !== '-' && dbgap  !== '' && dbgap !== undefined && dbgap !== null) {
+          cell = cell + '<a href="https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/study.cgi?study_id=' + dbgap + '" target="_blank">dbGAP</a><br>'
+      }
+      if (cell.endsWith('<br>')) {
+          cell = cell.substring(0, cell.length - 4);
+      }
+      return cell
+  }
+
+  function get_link(data, source) {
+      if (source === 'PMCID' && data === 'NA') {
+          return 'Pending'
+      }
+      if (data === '-' || data === undefined || data === null) {
+          return '-'
+      }
+      if (data === 'NA') {
+          return data
+      }
+      let link = null;
+      switch (source) {
+          case 'PMCID':
+              link = "<a href='https://www.ncbi.nlm.nih.gov/pmc/articles/" + data + "' target='_blank'>" + data + "</a>";
+              break;
+          case 'PubMed':
+              link = "<a href='https://www.ncbi.nlm.nih.gov/pubmed/" + data + "' target='_blank'>" + data + "</a>";
+              break;
+          case 'GEO':
+              link = "<a href='https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=" + data + "' target='_blank'><i class='fa fa-external-link'></i></a>";
+              break;
+          case 'SRA':
+              link = "<a href='https://trace.ncbi.nlm.nih.gov/Traces/sra/?study=" + data + "' target='_blank'><i class='fa fa-external-link'></i></a>";
+              break;
+          case 'dbGAP':
+              link = "<a href='https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/study.cgi?study_id=" + data + "' target='_blank'><i class='fa fa-external-link'></i></a>";
+              break;
+          default:
+              link = data;
+      }
+      return link
+  }
+
+  function get_cancer_type(cancer) {
+      if (cancer === "['-']") {
+          return '-'
+      }
+      return String(cancer).replaceAll(',', '<br>')
+  }
+
+  function get_data_type(data) {
+      if (data === "-" || data === "nan") {
+          return '-'
+      }
+      split = String(data).split(';').filter((x) => x !== 'nan').map(function(dtype, idx) { return dtype.trim() })
+      unique = [...new Set(split)]
+      return unique.join('<br>')
+  }
+
+  function get_organism(organism) {
+      if (organism === "-") {
+          return '-'
+      }
+      return String(organism).replaceAll(';', '<br>')
+  }
+
+  function filter(val) {
+      let table = $('#table_id').DataTable();
+      table.search(val).draw();
+      document.getElementById('search_bar').value = val;
+  }
+
+  // function filter_networks(network) {
+  //     let table = $('#table_id').DataTable();
+  //     table.column(4).search('^' + network.trim() + '$', true).draw();
+  // }
+
+  // function filter_networks_check() {
+  //     let table = $('#table_id').DataTable();
+  //     let checked = $('input:checkbox[name="consortium-multicheck"]:checked').map(function() {
+  //         return this.value.trim();
+  //     }).get().join('|');
+  //     if (checked) {
+  //         let regex = '^(?=(' + checked + '))'
+  //         table.column(4).search(regex, true, false).draw();
+  //     }
+  // }
+
+  function filter_data_types(type) {
+      let table = $('#table_id').DataTable();
+      table.column(6).search(type.trim(), true).draw();
+  }
+
+  function filter_data_types_check() {
+      let table = $('#table_id').DataTable();
+      let checked = $('input:checkbox[name="data-type-multicheck"]:checked').map(function() {
+          console.log(this.value.trim())
+          return this.value.trim();
+      }).get().join('|');
+      if (checked) {
+          let regex = '^(?=(' + checked + '))'
+          table.column(6).search(regex, true, false).draw();
+      }
+  }
+
+  function filter_cancer_types(type) {
+      let table = $('#table_id').DataTable();
+      table.column(5).search('^' + type.trim() + '$', true).draw();
+  }
+
+  function filter_cancer_types_check() {
+      let table = $('#table_id').DataTable();
+      let checked = $('input:checkbox[name="cancer-type-multicheck"]:checked').map(function() {
+          return this.value.trim();
+      }).get().join('|');
+      if (checked) {
+          let regex = '^(?=(' + checked + '))'
+          table.column(5).search(regex, true, false).draw();
+      }
+  }
+
+  function filter_organism_check() {
+      let table = $('#table_id').DataTable();
+      let checked = $('input:checkbox[name="organism-multicheck"]:checked').map(function() {
+          return this.value.trim();
+      }).get().join('|');
+      if (checked) {
+          let regex = '^(?=(' + checked + '))'
+          table.column(7).search(regex, true, false).draw();
+      }
+  }
+
+  function clear_search() {
+      let table = $('#table_id').DataTable();
+      table.search('').draw();
+      document.getElementById('search_bar').value = '';
+  }
+
+  function expand_filters() {
+      $('.panel-collapse').collapse('show')
+  }
+
+  function hide_filters() {
+      $('.panel-collapse').collapse('hide') 
+  }
+
+  function clear_filters() {
+      let table = $('#table_id').DataTable();
+      table.columns([4, 5, 6, 7]).search('').draw();
+
+      clear_search()
+
+      // multi checks
+      $('input:checkbox[id="parent_check_data_type"]').prop('checked', true);
+      $('input:checkbox[id="parent_check_cancer_type"]').prop('checked', true);
+      // $('input:checkbox[id="parent_check_consortium"]').prop('checked', true);
+      $('input:checkbox[id="parent_check_organism"]').prop('checked', true);
+      checkAll('data-type-multicheck')
+      checkAll('cancer-type-multicheck')
+      // checkAll('consortium-multicheck')
+      checkAll('organism-multicheck')
+
+  }
+
+  function get_counts_by_val(data) {
+      let processed = {};
+      for(var i = 0; i < data.length; ++i) {
+          if(!processed[data[i]])
+              processed[data[i]] = 0;
+          ++processed[data[i]];
+      };
+      return processed
+  }
+
+  // function count_cases_and_samples(data) {
+  //     let proc_data = data.map(function(row) {
+  //         return {
+  //             'Sample': row[0],
+  //             'Cases': row[1],
+  //         }
+  //     });
+  //     let data_out = {};
+  //     var case_count = 0;
+  //     var sample_count = 0;
+  //     for (let i = 0; i < proc_data.length; i++) {
+  //         sample_count += parseInt(proc_data[i]['Sample'])
+  //         case_count += parseInt(proc_data[i]['Cases'])
+  //     }
+  //     return [sample_count, case_count]
+  // }
+
+  function set_publications(data, total) {
+      let sra = 0;
+      let geo = 0;
+      let dbgap = 0;
+      for (let i=0; i<data.length; i++) {
+          if (data[i][0] !== '-' && data[i][0] !== null) {
+              ++sra
+          }
+          if (data[i][1] !== '-' && data[i][1] !== null) {
+              ++geo
+          }
+          if (data[i][2] !== '-' && data[i][2] !== null) {
+              ++dbgap
+          }
+      }
+      $("#sra-count").html(sra);
+      $("#geo-count").html(geo);
+      $("#dbgap-count").html(dbgap);
+      $("#pub-count").html(total);
+      $("#pub-count2").html(total);
+  }
+
+  function draw_cancer_types_by_data_types(data) {
+      
+      var data_types = data.map(function(row) {
+          return row[1]
+      })
+      var data_types_count = get_counts_by_val(data_types)
+      var sorted_data_types = Object.fromEntries(Object.entries(data_types_count)
+                                                      .sort(([,a],[,b]) => b-a)
+                                                      )
+      var top_five_data_types = []                                  
+      for (let i=0; i<5; i++) {
+          top_five_data_types.push(Object.keys(sorted_data_types)[i])
+      }
+
+      var cancer_types = data.map(function(row) {
+          return row[0]
+      })
+      var cancer_types_count = get_counts_by_val(cancer_types)
+      var sorted_cancer_types = Object.fromEntries(Object.entries(cancer_types_count)
+                                                      .sort(([,a],[,b]) => b-a)
+                                                      )
+      var top_five_cancer_types = {}                                      
+      for (let i=0; i<5; i++) {
+          if (!top_five_cancer_types[Object.keys(sorted_cancer_types)[i]]) {
+              top_five_cancer_types[Object.keys(sorted_cancer_types)[i]] = {
+                  'count': 0,
+                  'data_types': top_five_data_types.reduce((o, key) => ({ ...o, [key]: {'count': 0, 'percent': 0}}), {})
+              }
+          }
+          top_five_cancer_types[Object.keys(sorted_cancer_types)[i]]['count'] =  Object.values(sorted_cancer_types)[i]
+      }
+      
+      let cancer_type = '';
+      let data_type = '';
+      for (let i=0; i < data.length; i++) {
+          cancer_type = data[i][0]
+          data_type = data[i][1]
+          if (cancer_type in top_five_cancer_types) {
+              if (top_five_data_types.includes(data_type)) {
+                  if (!top_five_cancer_types[cancer_type]['data_types'][data_type]) {
+                      top_five_cancer_types[cancer_type]['data_types'][data_type] = {
+                          'count': 0,
+                          'percent': 0
+                      }
+                  }
+                  ++top_five_cancer_types[cancer_type]['data_types'][data_type]['count']
+              }
+          }
+      }
+      
+      let sum = 0;
+      for (let i=0; i < Object.keys(top_five_cancer_types).length; i++) {
+          cancer_type = Object.keys(top_five_cancer_types)[i]
+          sum = Object.values(top_five_cancer_types[cancer_type]['data_types']).map(function(row) { return row.count }).reduce((a, b) => a + b);
+          for (let ii=0; ii < Object.keys(top_five_cancer_types[cancer_type]['data_types']).length; ii++) {   
+              data_type = Object.keys(top_five_cancer_types[cancer_type]['data_types'])[ii]
+              top_five_cancer_types[cancer_type]['data_types'][data_type]['percent'] = (top_five_cancer_types[cancer_type]['data_types'][data_type]['count']/sum)*100
+          }
+      }
+
+      var broken_labels = Object.keys(top_five_cancer_types).filter(function(label) { return label !== 'undefined'} ).map(function(key) {
+          return key.split(' ').join('<br>')
+      })
+
+      var trace1 = {
+      x: Object.keys(top_five_cancer_types).map(function(cancer) {
+          return top_five_cancer_types[cancer]['data_types'][top_five_data_types[0]]['percent']
+      }),
+      y: broken_labels,
+      text: Object.keys(top_five_cancer_types).map(function(cancer) {
+          return cancer + '<br>' + top_five_data_types[0] + '<br>' +top_five_cancer_types[cancer]['data_types'][top_five_data_types[0]]['count']
+      }),
+      hovertemplate: '%{text}<extra></extra>',
+      name: top_five_data_types[0],
+      orientation: 'h',
+      hoverinfo: 'skip',
+      marker: {
+          width: 1
+      },
+      type: 'bar'
+      };
+
+      var trace2 = {
+      x: Object.keys(top_five_cancer_types).map(function(cancer) {
+          return top_five_cancer_types[cancer]['data_types'][top_five_data_types[1]]['percent']
+      }),
+      y: broken_labels,
+      text: Object.keys(top_five_cancer_types).map(function(cancer) {
+          return cancer + '<br>' + top_five_data_types[1] + '<br>' +top_five_cancer_types[cancer]['data_types'][top_five_data_types[1]]['count']
+      }),
+      hovertemplate: '%{text}<extra></extra>',
+      name: top_five_data_types[1],
+      orientation: 'h',
+      type: 'bar',
+      showlegend: true,
+      marker: {
+          width: 1
+      }
+      };
+
+      var trace3 = {
+      x: Object.keys(top_five_cancer_types).map(function(cancer) {
+          return top_five_cancer_types[cancer]['data_types'][top_five_data_types[2]]['percent']
+      }),
+      y: broken_labels,
+      text: Object.keys(top_five_cancer_types).map(function(cancer) {
+          return cancer + '<br>' + top_five_data_types[2] + '<br>' +top_five_cancer_types[cancer]['data_types'][top_five_data_types[2]]['count']
+      }),
+      hovertemplate: '%{text}<extra></extra>',
+      name: top_five_data_types[2],
+      orientation: 'h',
+      type: 'bar',
+      showlegend: true,
+      marker: {
+          width: 1
+      }
+      };
+
+      var trace4 = {
+      x: Object.keys(top_five_cancer_types).map(function(cancer) {
+          return top_five_cancer_types[cancer]['data_types'][top_five_data_types[3]]['percent']
+      }),
+      y: broken_labels,
+      text: Object.keys(top_five_cancer_types).map(function(cancer) {
+          return cancer + '<br>' + top_five_data_types[3] + '<br>' + top_five_cancer_types[cancer]['data_types'][top_five_data_types[3]]['count']
+      }),
+      hovertemplate: '%{text}<extra></extra>',
+      name: top_five_data_types[3],
+      orientation: 'h',
+      showlegend: true,
+      type: 'bar',
+      marker: {
+          width: 1
+      }
+      };
+      
+      var trace5 = {
+      x: Object.keys(top_five_cancer_types).map(function(cancer) {
+          return top_five_cancer_types[cancer]['data_types'][top_five_data_types[4]]['percent']
+      }),
+      y: broken_labels,
+      text: Object.keys(top_five_cancer_types).map(function(cancer) {
+          return cancer + '<br>' + top_five_data_types[4] + '<br>' +top_five_cancer_types[cancer]['data_types'][top_five_data_types[4]]['count']
+      }),
+      hovertemplate: '%{text}<extra></extra>',
+      name: top_five_data_types[4],
+      orientation: 'h',
+      showlegend: true,
+      type: 'bar',
+      marker: {
+          width: 1
+      }
+      };
+
+      var traces = [trace1, trace2, trace3, trace4, trace5].filter(function(trace) {
+          return trace.name !== undefined
+      })
+      var data = traces;
+
+      var layout = {
+      barmode: 'stack',
+      automargin: true,
+      showlegend: true,
+      hovermode: 'closest',
+      colorway: ['#086bbc', '#122066', '#13132d', '#93100d', '#dd3110'],
+      margin: {
+          //l: 60,
+          r: 0,
+          t: 18,
+          pad: 4
+      },
+      height: 300,
+      xaxis: {
+          'title': 'Percentage of Top 5 Data Types',
+      },
+      yaxis: {
+          'title': {
+              'text': 'Top 5 Cancer Types',
+              'standoff': 20,
+              },
+          automargin: true
+      }
+      };
+
+      Plotly.newPlot('cancer_types_data_types_plot', data, layout, {displayModeBar: false});
+      cancer_types_data_types_plot.on('plotly_click', function(data){
+              data_type = data.points[0].data.name.trim()
+              cancer_type = data.points[0].label.split('<br>').join(' ').trim()
+              checkFilter('cancer-type-multicheck', 'parent_check_cancer_type', cancer_type)
+              checkFilter('data-type-multicheck', 'parent_check_data_type', data_type)
+              filter_cancer_types(cancer_type)
+              filter_data_types(data_type)
+      });
+      cancer_types_data_types_plot.on('plotly_legendclick', function(data){
+              data_type = top_five_data_types[data.curveNumber].trim()
+              filter_data_types(data_type)
+              checkFilter('data-type-multicheck', 'parent_check_data_type', data_type)
+              return false;
+      });
+  }
+
+  function draw_cancer_types_bar(data) {
+
+      var sorted_cancer_types = Object.fromEntries(Object.entries(data)
+                                                      .sort(([,a],[,b]) => b-a)
+                                                      )
+      var top_five_cancer_types = {}                                      
+      for (let i=0; i<5; i++) {
+          if (!top_five_cancer_types[Object.keys(sorted_cancer_types)[i]]) {
+              top_five_cancer_types[Object.keys(sorted_cancer_types)[i]] = 0
+          }
+          top_five_cancer_types[Object.keys(sorted_cancer_types)[i]] =  Object.values(sorted_cancer_types)[i]
+      }
+      
+      var broken_labels = Object.keys(top_five_cancer_types).filter(function(label) { return label !== 'undefined'} ).map(function(key) {
+          return key.split(' ').join('<br>')
+      })
+
+      var layout = {
+      automargin: true,
+      hovermode: 'closest',
+      colorway: ['#086bbc', '#122066', '#13132d', '#93100d', '#dd3110'],
+      margin: {
+          //l: 60,
+          r: 0,
+          t: 18,
+          pad: 4
+      },
+      xaxis: {
+          'title': 'Cancer Types'
+      },
+      yaxis: {
+          automargin: true
+      },
+      height: 300,
+      };
+      var plot_data = [
+          {
+              x: Object.values(top_five_cancer_types),
+              y: broken_labels,
+              type: 'bar',
+              orientation: 'h'
+          }
+      ];
+
+      Plotly.newPlot('cancer_types_plot', plot_data, layout, {displayModeBar: false});
+      cancer_types_plot.on('plotly_click', function(data){
+              cancer_type = data.points[0].label.split('<br>').join(' ').trim()
+              checkFilter('cancer-type-multicheck', 'parent_check_cancer_type', cancer_type)
+              filter_cancer_types(cancer_type)
+      });
+  }
+
+  function draw_data_types_bar(data) {
+
+      var sorted_data_types = Object.fromEntries(Object.entries(data)
+                                                      .sort(([,a],[,b]) => b-a)
+                                                      )
+      var top_five_data_types = {}                                      
+      for (let i=0; i<5; i++) {
+          if (!top_five_data_types[Object.keys(sorted_data_types)[i]]) {
+              top_five_data_types[Object.keys(sorted_data_types)[i]] = 0
+          }
+          top_five_data_types[Object.keys(sorted_data_types)[i]] =  Object.values(sorted_data_types)[i]
+      }
+
+      var broken_labels = Object.keys(top_five_data_types).filter(function(label) { return label !== 'undefined'} ).map(function(key) {
+          return key.split(' ').join('<br>')
+      })
+
+      var layout = {
+      automargin: true,
+      hovermode: 'closest',
+      colorway: ['#086bbc', '#122066', '#13132d', '#93100d', '#dd3110'],
+      margin: {
+          //l: 60,
+          r: 0,
+          t: 18,
+          pad: 4
+      },
+      xaxis: {
+          'title': 'Data Types'
+      },
+      yaxis: {
+          automargin: true
+      },
+      height: 300,
+      };
+      var plot_data = [
+          {
+              x: Object.values(top_five_data_types),
+              y: broken_labels,
+              type: 'bar',
+              orientation: 'h'
+          }
+      ];
+
+      Plotly.newPlot('data_types_plot', plot_data, layout, {displayModeBar: false});
+      data_types_plot.on('plotly_click', function(data){
+              data_type = data.points[0].label.split('<br>').join(' ').trim()
+              checkFilter('data-type-multicheck', 'parent_check_data_type', data_type)
+              filter_data_types(data_type)
+      });
+  }
+
+  defer(function() {
+      $(document).ready(function () {
+          dataset = [];
+          live_data = [];
+          // plot_networks  = [];
+          plot_data_types = [];
+          plot_cancer_types = [];
+          plot_samples = [];
+          plot_cancer_data_types = [];
+          plot_organisms = [];
+          $.each(data_catalog_data, function(key, row) {
+              dataset.push([
+                  get_title_popover(row.data_title, row.data_summary), // 0
+                  get_popover(row.study_abstract, 'Study Design'), // 1
+                  generate_data_views(row.geo_accession, row.srp_accession, row.dbgap_id), // 2
+                  get_citation_link(row.pmid), // 3
+                  // row.pmid_link, // 3 this will need to be changed to be an actual link
+                  // get_network_link(row.network), // 4
+                  row.pmid, // 4 place holder to keep the column numbers the same
+                  get_cancer_type(row.cancer_type), // 5
+                  get_data_type(row.library_strategy), // 6
+                  get_organism(row.taxon), // 7
+
+                  // hide from here
+                  row.data_summary, // 8
+                  row.n_samples, // 9
+                  row.pmid, // 10
+                  row.grant, // 11
+                  row.geo_accession, // 12
+                  row.srp_accession, // 13
+                  row.pmid, // 14 adding a placeholder here
+                  // row.dbgap_id, // 14
+                  row.library_strategy // 15
+              ]);
+              // fix filtering with above indexes, figure out what to do with hella long cancer types
+              // plot_networks.push([
+              //     row.network
+              // ])
+              split_data_type = String(row['library_strategy']).split(';')
+              for (let ii=0; ii<split_data_type.length; ii++) {
+                  if (split_data_type[ii].trim() === 'nan') {
+                      continue
+                  }
+                  plot_data_types.push(split_data_type[ii].trim())
+              }
+              split_cancer_type = String(row['cancer_type']).split(',')
+              for (let ii=0; ii<split_cancer_type.length; ii++) {
+                  // handle no cancer type
+                  if (split_cancer_type[ii].trim() === "['-']" || split_cancer_type[ii].trim() === "nan") {
+                      continue;
+                  }
+                  plot_cancer_types.push(split_cancer_type[ii].trim())
+                  for (let iii=0; iii<split_data_type.length; iii++) {
+                      plot_cancer_data_types.push([
+                          split_cancer_type[ii].trim(),
+                          split_data_type[iii].trim()
+                      ])
+                  }
+              }
+              split_organisms = String(row['taxon']).split(';')
+              for (let ii=0; ii<split_organisms.length; ii++) {
+                  // handle null organisms
+                  if (split_organisms[ii].trim() === 'null' || split_organisms[ii].trim() === '-' || split_organisms[ii].trim() === 'nan') {
+                      continue;
+                  }
+                  plot_organisms.push(split_organisms[ii].trim())
+              }
+          });
+
+          
+           // organisms
+          let plot_organism_processed = get_counts_by_val(plot_organisms)
+          var organism_multicheck_list = Object.keys(plot_organism_processed).sort().map(function(type) {
+              let type_joined = type.split(' ').join('_')
+              return `
+              <div class="form-check">
+                  <input type="checkbox" value="` + type + `" name="organism-multicheck" class="form-check-input" onchange="filter_organism_check()" id="` + type_joined + `" checked>
+                  <label class="form-check-label" for="` + type_joined + `">` + type + `</label>
+              </div>
+              `;
+          });
+          var organism_multicheck = '';
+          for(var i = 0; i < organism_multicheck_list.length; ++i) {
+              organism_multicheck += organism_multicheck_list[i];
+          };
+          document.getElementById('organism-multicheck').innerHTML = organism_multicheck;
+
+          // cancer types plot
+          let plot_cancer_types_processed = get_counts_by_val(plot_cancer_types);
+
+          // cancer types multi check
+          var cancer_types_multicheck_list = Object.keys(plot_cancer_types_processed).sort().map(function(type) {
+              let type_joined = type.split(' ').join('_')
+              return `
+              <div class="form-check">
+                  <input type="checkbox" value="` + type + `" name="cancer-type-multicheck" class="form-check-input" onchange="filter_cancer_types_check()" id="` + type_joined + `" checked>
+                  <label class="form-check-label" for="` + type_joined + `">` + type + `</label>
+              </div>
+              `;
+          });
+          var cancer_types_multicheck = '';
+          for(var i = 0; i < cancer_types_multicheck_list.length; ++i) {
+              cancer_types_multicheck += cancer_types_multicheck_list[i];
+          };
+          document.getElementById('cancer-type-multicheck').innerHTML = cancer_types_multicheck;
+
+          // networks plot
+          // let plot_networks_processed = get_counts_by_val(plot_networks);
+          // var networks_multicheck_list = Object.keys(plot_networks_processed).sort().map(function(type) {
+          //     let type_joined = type.split(' ').join('_')
+          //     return `
+          //     <div class="form-check">
+          //         <input type="checkbox" value="` + type + `" name="consortium-multicheck" class="form-check-input" onchange="filter_networks_check()" id="` + type_joined + `" checked>
+          //         <label class="form-check-label" for="` + type_joined + `">` + type + `</label>
+          //     </div>
+          //     `;
+          // });
+          // var networks_multicheck = '';
+          // for(var i = 0; i < networks_multicheck_list.length; ++i) {
+          //     networks_multicheck += networks_multicheck_list[i];
+          // };
+          // document.getElementById('consortium-multicheck').innerHTML = networks_multicheck;
+
+          // data types plot
+          let plot_data_types_processed = get_counts_by_val(plot_data_types);
+
+          // data types multicheck
+          var data_types_multicheck_list = Object.keys(plot_data_types_processed).sort().map(function(type) {
+              let type_joined = type.split(' ').join('_')
+              return `
+              <div class="form-check">
+                  <input type="checkbox" value="` + type + `" name="data-type-multicheck" class="form-check-input" onchange="filter_data_types_check()" id="` + type_joined + `" checked>
+                  <label class="form-check-label" for="` + type_joined + `">` + type + `</label>
+              </div>
+              `;
+          });
+          var data_types_multicheck = '';
+          for(var i = 0; i < data_types_multicheck_list.length; ++i) {
+              data_types_multicheck += data_types_multicheck_list[i];
+          };
+          document.getElementById('data-type-multicheck').innerHTML = data_types_multicheck;
+
+          // main datatable
+          let table = $('#table_id').DataTable({
+              data: dataset,
+              lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+              "pageLength": -1,
+              "language": {
+                  "search": "Search:"
+              },
+              dom:     "<'row'<'col-sm-3'><'col-sm-3 text-center'B><'col-sm-2'<'expand_filters'>><'col-sm-2'<'hide_filters'>><'col-sm-2'<'clear_filters'>>>" +
+                      "<'row'<'col-sm-12'tr>>" +
+                      "<'row'<'col-sm-5'i><'col-sm-7'p>>",
+              "order": [[11, "asc"]],
+           autoWidth: false,
+              //scrollX: true, // this breaks the popovers
+              // draw callback recreates plots when data is redrawn to properly reflect visible data in the table
+
+             "drawCallback": function( settings ) {
+                  var api = this.api();
+                  var data = api.rows( {page:'current'} ).data()
+                  var proc_data = data.map(function(row) {
+                      return { 
+                              'Organism': row[7],
+                              // 'Consortium': extract_network(row[4]),
+                              'Data Type': row[6],
+                              'Cancer Type': row[5],
+                              'GEO': row[12],
+                              'SRA': row[13],
+                              'dbGAP': row[14]
+                      }
+                  });
+                  // need to split and unnest some of the data below to get uniques
+                  plot_data_types = [];
+                  plot_cancer_types = [];
+                  plot_cancer_data_types = [];
+                  publications = [];
+                  for (let i = 0; i<proc_data.length;i++) {
+                      publications.push([
+                          proc_data[i]['SRA'],
+                          proc_data[i]['GEO'],
+                          proc_data[i]['dbGAP']
+                      ])
+                      split_data_type = proc_data[i]['Data Type'].split('<br>')
+                      for (let ii=0; ii<split_data_type.length; ii++) {
+                          plot_data_types.push(split_data_type[ii].trim())
+                      }
+                      split_cancer_type = proc_data[i]['Cancer Type'].split('<br>')
+                      for (let ii=0; ii<split_cancer_type.length; ii++) {
+                          // handle no cancer type
+                          if (split_cancer_type[ii].trim() === "-") {
+                              continue;
+                          }
+                          plot_cancer_types.push(split_cancer_type[ii].trim())
+                          for (let iii=0; iii<split_data_type.length; iii++) {
+                              plot_cancer_data_types.push([
+                                  split_cancer_type[ii].trim(),
+                                  split_data_type[iii].trim()
+                              ])
+                          }
+                      }
+                  };
+                  // put plots and whatnot here for when the table updates
+                  draw_cancer_types_by_data_types(plot_cancer_data_types)
+                  draw_cancer_types_bar(get_counts_by_val(plot_cancer_types))
+                  draw_data_types_bar(get_counts_by_val(plot_data_types))
+                  set_publications(publications, proc_data.length)
+              }, 
+              "columnDefs": [
+                    { className: "full_width", "targets": [ 0 ] },
+                    { targets: [ 1, 4, 8, 9, 10, 11, 12, 13, 14, 15 ], searchable: true, visible: false},
+                    { className: "cell_center", "targets": [ 2, 3, 5 ]},
+          ]
+          });
+          
+              // showing events
+          $("#search-collapse").on('show.bs.collapse', function(){
+              $("#search_caret").addClass('fa-caret-up')
+              $("#search_caret").removeClass('fa-caret-down')
+          });
+          $("#organism-multicheck").on('show.bs.collapse', function(){
+              $("#organism_caret").addClass('fa-caret-up')
+              $("#organism_caret").removeClass('fa-caret-down')
+          });
+          $("#cancer-type-multicheck").on('show.bs.collapse', function(){
+              $("#cancer_type_caret").addClass('fa-caret-up')
+              $("#cancer_type_caret").removeClass('fa-caret-down')
+          });
+          $("#data-type-multicheck").on('show.bs.collapse', function(){
+              $("#data_type_caret").addClass('fa-caret-up')
+              $("#data_type_caret").removeClass('fa-caret-down')
+          });
+          // $("#consortium-multicheck").on('show.bs.collapse', function(){
+          //     $("#consortium_caret").addClass('fa-caret-up')
+          //     $("#consortium_caret").removeClass('fa-caret-down')
+          // });
+
+          // hiding events
+          $("#search-collapse").on('hide.bs.collapse', function(){
+              $("#search_caret").addClass('fa-caret-down')
+              $("#search_caret").removeClass('fa-caret-up')
+          });
+          $("#organism-multicheck").on('hide.bs.collapse', function(){
+              $("#organism_caret").addClass('fa-caret-down')
+              $("#organism_caret").removeClass('fa-caret-up')
+          });
+          $("#cancer-type-multicheck").on('hide.bs.collapse', function(){
+              $("#cancer_type_caret").addClass('fa-caret-down')
+              $("#cancer_type_caret").removeClass('fa-caret-up')
+          });
+          $("#data-type-multicheck").on('hide.bs.collapse', function(){
+              $("#data_type_caret").addClass('fa-caret-down')
+              $("#data_type_caret").removeClass('fa-caret-up')
+          });
+          // $("#consortium-multicheck").on('hide.bs.collapse', function(){
+          //     $("#consortium_caret").addClass('fa-caret-down')
+          //     $("#consortium_caret").removeClass('fa-caret-up')
+          // });
+
+          $("#search_bar").on('keyup change', function () {
+              table.search(this.value).draw();
+          });
+          // {% if pubmed_id is not None %}
+          //     document.getElementById('search_bar').value = '{{pubmed_id}}';
+          //     table.search('{{pubmed_id}}').draw();
+          //     $("#search-collapse").collapse('show');
+          // {% endif %}
+          // $("#last_updated").text(data_catalog_version);
+          $("div.clear_filters").html('<button type="button" class="btn btn-primary" onclick="clear_filters()">Clear Filters</button>');
+          $("div.expand_filters").html('<button type="button" class="btn btn-primary" onclick="expand_filters()">Show Filters</button>');
+          $("div.hide_filters").html('<button type="button" class="btn btn-primary" onclick="hide_filters()">Hide Filters</button>');
+          $('[data-toggle="popover"]').popover();
+          $('body').on('click', function (e) {
+              $('[data-toggle="popover"]').each(function () {
+                  if (!$(this).is(e.target) &&
+                       $(this).has(e.target).length === 0 &&
+                       $('.popover').has(e.target).length === 0) {
+                      $(this).popover('hide');
+                  }
+          });
+          });
+      })
+  });
+  </script>
+    <script>
+      // Extract grants and publications from pub_cite_data
+      let grants = new Set();
+      let publications = [];
+  
+      for (let key in pub_cite_data) {
+        let data = pub_cite_data[key];
+        let grantsList = data['grant'].split(';').map((grant) => grant.trim()).filter(Boolean);
+  
+        for (let grant of grantsList) {
+          grants.add(grant);
+          publications.push({ 'pub_id': key, 'grant': grant });
+        }
+      }
+  
+      // Create nodes variable
+      let nodes = Array.from(grants).map((grant) => {
+        return { 'id': grant, 'value': publications.filter((p) => p['grant'] === grant).length, 'label': grant };
+      });
+  
+      // Create edges variable
+      let edges = [];
+      let edgeCounts = {};
+  
+      // Generate co-listed grants for each publication
+      let coListedGrants = {};
+      for (let publication of publications) {
+        let pubId = publication['pub_id'];
+        let grant = publication['grant'];
+  
+        if (!coListedGrants[pubId]) {
+          coListedGrants[pubId] = [];
+        }
+        coListedGrants[pubId].push(grant);
+      }
+  
+      // Count the co-listing occurrences for each pair of grants
+      for (let pubId in coListedGrants) {
+        let grantsList = coListedGrants[pubId];
+        for (let i = 0; i < grantsList.length; i++) {
+          for (let j = i + 1; j < grantsList.length; j++) {
+            let grantA = grantsList[i];
+            let grantB = grantsList[j];
+  
+            // Exclude edges between the same node
+            if (grantA !== grantB) {
+              let edgeId = [grantA, grantB].sort().join('_');
+  
+              if (edgeCounts[edgeId]) {
+                edgeCounts[edgeId]++;
+              } else {
+                edgeCounts[edgeId] = 1;
+              }
+            }
+          }
+        }
+      }
+  
+      // Create edges based on the unique pairs and their counts
+      for (let edgeId in edgeCounts) {
+        let [from, to] = edgeId.split('_');
+        let value = edgeCounts[edgeId];
+        let title = 'co-funded ' + value + ' publications';
+        edges.push({ 'from': from, 'to': to, 'value': value, 'title': title });
+      }
+  
+      // Instantiate the network
+      window.addEventListener("DOMContentLoaded", () => {
+        var container = document.getElementById("mynetwork");
+        var data = {
+          nodes: new vis.DataSet(nodes),
+          edges: new vis.DataSet(edges),
+        };
+        var options = {
+          layout: {
+            improvedLayout: false,
+          },
+          nodes: {
+            shape: "dot",
+          },
+          edges: {
+            smooth: {
+              type: "continuous",
+              forceDirection: "none",
+            },
+          },
+          physics: {
+            enabled: true,
+            barnesHut: {
+              gravitationalConstant: -2000,
+              centralGravity: 0.1,
+              springLength: 95,
+              springConstant: 0.04,
+              damping: 0.09,
+              avoidOverlap: 0.1,
+            },
+            maxVelocity: 50,
+            solver: "barnesHut",
+            stabilization: { iterations: 1000 },
+          },
+        };
+        var network = new vis.Network(container, data, options);
+  
+        console.log('nodes =', nodes);
+        console.log('edges =', edges);
+  
+        // Stop the layout after stabilization
+        network.once("stabilizationIterationsDone", function () {
+          network.setOptions({ physics: false });
+        });
+      });
+    </script>
+</body>
+
+</html>
