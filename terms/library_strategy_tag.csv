@@ -1,0 +1,60 @@
+parent_term,tagged_terms,tagged_terms_lower
+AMPLICON,AMPLICON,amplicon
+ATAC-seq,ATAC seq,atac seq
+Bisulfite-Seq,Bisulfite Seq,bisulfite seq
+Bisulfite-Seq,Bisulfite Seq reduced representation ,bisulfite seq reduced representation 
+ChIA-PET,ChIA PET,chia pet
+ChIP-Seq,ChIP Seq,chip seq
+CLInt-Seq,CLInt Seq,clint seq
+CLONE, CLONE , clone 
+CLONEEND,CLONEEND,cloneend
+CRISPR,CRISPR,crispr
+CTS, CTS , cts 
+DNase-Hypersensitivity,DNase Hypersensitivity,dnase hypersensitivity
+EST, EST , est 
+FAIRE-seq,FAIRE seq,faire seq
+FINISHING,FINISHING,finishing
+FL-cDNA,FL cDNA,fl cdna
+Hi-C, Hi C , hi c 
+MBD-Seq,MBD Seq,mbd seq
+MeDIP-Seq,MeDIP Seq,medip seq
+Microarray,Micro Array,micro array
+Microarray,Microarray,microarray
+Microarray,BeadChip,beadchip
+RNA-Seq,miRNA Seq,mirna seq
+MNase-Seq,MNase Seq,mnase seq
+MRE-Seq,MRE Seq,mre seq
+RNA-Seq,ncRNA Seq,ncrna seq
+PCR, PCR , pcr 
+PLUMAGE,PLUMAGE,PLUMAGE
+POOLCLONE,POOLCLONE,poolclone
+RIP-Seq,RIP Seq,rip seq
+RNA-Seq,RNA Seq,rna seq
+RNA-Seq,RNA Seq CAGE ,rna seq cage 
+RNA-Seq,RNA Seq RACE ,rna seq race 
+RNA-Seq,ssRNA seq,ssrna seq
+RNA-Seq,stranded RNA seq,stranded rna seq
+RT-PCR,RT PCR,rt pcr
+scATAC-Seq,scATAC Seq,scatac seq
+scATAC-Seq, scATAC , scatac 
+scATAC-Seq,single cell ATAC Seq,single cell atac seq
+scATAC-Seq,single cell ATAC,single cell atac
+scRNA-Seq,scRNA Seq,scrna seq
+scRNA-Seq, scRNA , scrna 
+scRNA-Seq,single-cell transcriptomic, single cell transcriptomic
+scRNA-Seq,single cell RNA Seq,single cell rna seq
+scRNA-Seq,single cell RNA,single cell rna
+SELEX,SELEX,selex
+TCR-Seq,TCR Seq,tcr seq
+TCR-Seq, TCR , tcr 
+Tn-Seq,Tn Seq,tn seq
+WCS, WCS , wcs 
+WES, WES , wes 
+WES, WXS , wxs 
+WES,Exome-Seq,exome seq 
+WES,whole exome sequencing,whole exome sequencing
+WES,whole exome seq,whole exome seq
+WGA, WGA , wga 
+WGS, WGS , wgs 
+WGS,whole genome sequencing,whole genome sequencing
+WGS,whole genome seq,whole genome seq
