@@ -21,23 +21,35 @@ Go to [account settings](https://account.ncbi.nlm.nih.gov/settings/), scroll dow
 
 
 ## Usage:
-Upload a text file with your list of grants (or edit the sample file: `example_grants.txt`)
+1. Upload a text file with your list of grants (or edit the sample file: `example_grants.txt`)
 
-Retrieve your data by specifying the text file which contains your grant list: 
+2. Retrieve your data by specifying the text file which contains your grant list: 
 
-`python get_data.py -grants example_grants.txt`
+```
+$ python get_data.py -grants example_grants.txt
+```
 
-Navigate to the html file, `retriever_app.html`, in a browser.
+3. Navigate to the html file, `retriever_app.html`, in a browser to see the data summaries and tables.
 
-To edit your data:
+### To edit your data:
 
-Navigate to the `sheets_for_editing` folder, open the excel sheet corresponding to the tabs on the html page. If you would like to change what data is displayed, change the last column, `display`, from `y` to `n`. Save the excel sheet.
+1. Edit the excel files: Navigate to the `sheets_for_editing` folder, edit the excel sheet corresponding to the tabs on the html page. If you would like to change what data is displayed, change the value in the last column, `display`, from `y` to `n`. Save the excel sheet.
 
-To apply these changes run the following command: 
+2. To apply these changes run the following command: 
 
 `python refresh_data.py -f file_name` to update the file that has been modified.
 
-`-f` options are `data_catalog`, `pub_cite`, `clinical_trials`, `software_catalog`, or `dbgap_data`. Specify the file name without the extension: `python refresh.py -f data_catalog`
+`-f` options are 
+* `data_catalog`, 
+* `pub_cite`, 
+* `clinical_trials`, 
+* `software_catalog`, or 
+* `dbgap_data`. 
+
+Specify the file name without the file extension: 
+```
+$ python refresh.py -f data_catalog
+```
 
 
 Detailed description and more usage/tips to come ...
