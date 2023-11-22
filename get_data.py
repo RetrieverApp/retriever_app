@@ -30,7 +30,7 @@ current_directory = os.getcwd()
 json_folder = 'JSON_data'
 json_folder_path = os.path.join(current_directory, json_folder)
 #consider dealing with case where someone wants to generate files for multiple projects
-if not os.path.exists(current_directory):
+if not os.path.exists(json_folder_path):
     os.makedirs(json_folder_path)
     print(f"Folder 'JSON_data' created at {json_folder_path}")
 else:
@@ -42,7 +42,7 @@ pub_cite_df, data_catalog_df = grant_to_output(grants, output_file=json_folder, 
 
 excel_folder_path = os.path.join(current_directory, 'sheets_for_editing')
 #consider dealing with case where someone wants to generate files for multiple projects
-if not os.path.exists(current_directory):
+if not os.path.exists(excel_folder_path):
     os.makedirs(excel_folder_path)
     print(f"Folder 'sheets_for_editing' created at {excel_folder_path}")
 else:
@@ -55,7 +55,7 @@ data_catalog_df['display'] = "y"
 pub_cite_df.to_excel('sheets_for_editing/pub_cite.xlsx', index=False)
 data_catalog_df.to_excel('sheets_for_editing/data_catalog.xlsx', index=False)
 
-print(z)
+#print(z)
 #this will create 3 data frames with potential clinical trials, dbgap, and github repos
 nct_pmc_df, gap_pmc_df, git_pmc_df = pmid_ls_to_pmc_info_df(list(pub_cite_df[pub_cite_df['is_research_article'] == 'Yes']['pubMedID'].astype(str)))
 
