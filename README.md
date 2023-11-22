@@ -4,7 +4,9 @@ Welcome to the retrieverApp! This is an open source tool used for publication pr
 This is a Python based application that will automatically gather data primarily from the [NCBI E-utilites](https://www.ncbi.nlm.nih.gov/books/NBK25497/#chapter2.Usage_Guidelines_and_Requiremen) and generate an html file that summarizes this data. This product exclusively queries publications in the PubMed database and gathers the associated data from GEO, SRA, dbGap, and Clinical Trials databases. 
 
 ## How to install:
-Clone github files locally: `git clone https://github.com/philippadoherty/retriever_app.git`
+Clone github files locally: `git clone
+https://github.com/philippadoherty/retriever_app.git` and change
+working directory: `cd retriever_app`.
 
 Install dependencies using pip: `pip install -r requirements.txt`
 
@@ -17,7 +19,11 @@ Using an API key may be necessary for your use case, depending on how many publi
 
 To get a key, go to [NCBI](https://account.ncbi.nlm.nih.gov) to create an account or log in.
 
-Go to [account settings](https://account.ncbi.nlm.nih.gov/settings/), scroll down to API Key Management, copy the key and your email into `constants.py` so `api_key = 'your api key'` and `email = 'your NCBI account email'`
+Go to [account settings](https://account.ncbi.nlm.nih.gov/settings/),
+scroll down to API Key Management, make a copy from
+`constants.py.template` into `constants.py` and copy the key and your
+email into `constants.py` so `api_key = 'your api key'` and `email =
+'your NCBI account email'`
 
 
 ## Usage:
