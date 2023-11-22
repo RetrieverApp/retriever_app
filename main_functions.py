@@ -996,7 +996,8 @@ def scrape_study_info(url):
             return {
                 "title": title,
                 "description": description,
-                "molecular_data": molecular_data
+                "molecular_data": molecular_data,
+                "URL":url
             }
 
         else:
@@ -1013,9 +1014,9 @@ def scrape_multiple_studies(urls):
         if "error" not in study_info:
             data.append({
                 "URL": url,
-                "Title": study_info["title"],
-                "Description": study_info["description"],
-                "Molecular Data": study_info["molecular_data"]
+                "title": study_info["title"],
+                "description": study_info["description"],
+                "molecular data": study_info["molecular_data"]
             })
 
     df = pd.DataFrame(data)
