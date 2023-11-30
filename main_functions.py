@@ -117,7 +117,7 @@ def getPublicationsForGrant(grant, groupSize=DEFAULT_GROUP_SIZE):
             
             try:
                 if p[u'MedlineCitation'][u'Article'][u'DataBankList']:
-                    print(p[u'MedlineCitation'][u'Article'][u'DataBankList'])
+                    # print(p[u'MedlineCitation'][u'Article'][u'DataBankList'])
                     if p[u'MedlineCitation'][u'Article'][u'DataBankList'][0]['DataBankName'] == 'ClinicalTrials.gov':
                         clinical_trials = p[u'MedlineCitation'][u'Article'][u'DataBankList'][0].get(u'AccessionNumberList', u'')
                         clinical_trials = list(set(clinical_trials))
@@ -142,7 +142,7 @@ def getPublicationsForPMID_ls(PMID_ls, groupSize=301):
         db='pubmed', id=PMID_ls
     )) as handle:
         results = Entrez.read(handle)
-    print(results)
+    # print(results)
     webEnv, queryKey = results['WebEnv'], results['QueryKey']
     for start in range(0, max_val, groupSize):
         attempt = 0
@@ -402,7 +402,7 @@ def pmid_to_sra_info_df(pmid):
     sra_df = pd.DataFrame(columns=['pmid', 'sra_db_id', 'srp_accession', 'gse_refname', 'sample_srs', 'sample_gsm', 'sample_title', 'sample_taxon', 'library_strategy', 'library_source', 'library_selection', 'library_construction_protocol', 'study_title', 'study_abstract', 'sample_attributes', 'sra_link', 'sra_date'])
     if len(sra_ids) > 0:
         for sra_id in sra_ids:
-            print(sra_id)
+            # print(sra_id)
             temp_sra_df = getInfoFromSRA(sra_id)
             new_row = {'pmid': pmid, 'sra_db_id': temp_sra_df['sra_db_id'][0] ,'srp_accession': temp_sra_df['srp_accession'][0], 'gse_refname': temp_sra_df['gse_refname'][0], 'sample_srs': temp_sra_df['sample_srs'][0], 'sample_gsm':temp_sra_df['sample_gsm'][0], 'sample_title': temp_sra_df['sample_title'][0], 'sample_taxon': temp_sra_df['sample_taxon'][0], 'library_strategy': temp_sra_df['library_strategy'][0], 'library_source': temp_sra_df['library_source'][0], 'library_selection': temp_sra_df['library_selection'][0], 'library_construction_protocol': temp_sra_df['library_construction_protocol'][0], 'study_title': temp_sra_df['study_title'][0], 'study_abstract': temp_sra_df['study_abstract'][0], 'sample_attributes': temp_sra_df['sample_attributes'][0], 'sra_link': temp_sra_df['sra_link'][0], 'sra_date': temp_sra_df['sra_date'][0]}
             sra_df = pd.concat([sra_df, pd.DataFrame(new_row, columns=sra_df.columns, index=[0])], ignore_index=True)
@@ -435,7 +435,7 @@ def getGEOIdFromPMID(pmid_ls):
             results = Entrez.read(handle)
         try:
             for e in results[0]['LinkSetDb'][0]['Link']:
-                print(e)
+                # print(e)
                 geo_ids.append(e['Id'])
                 new_row = {'pmid': pmid, 'geo_db_id':e['Id']}
                 pmid_geo_linker = pd.concat([pmid_geo_linker, pd.DataFrame(new_row, columns=pmid_geo_linker.columns, index=[0])], ignore_index=True)
@@ -456,7 +456,7 @@ def getInfoFromGEO(string_of_geo_ids):
         accession = str(safeget(r, 'Accession'))
         title = str(safeget(r, 'title'))
         summary = str(safeget(r, 'summary'))
-        print(summary)
+        # print(summary)
         taxon = str(safeget(r, 'taxon'))
         gdsType = str(safeget(r, 'gdsType'))
         n_samples = str(r['n_samples'].real)
@@ -470,7 +470,7 @@ def grant_ls_to_geo_info_df(grant_ls):
     pmid_str, pubmed_df, pmid_ls = grant_list_to_pubs_df(grant_ls)
     # pmid_ls = list(pubmed_df['pubMedID'].astype(str))
     geo_ids, pmid_geo_linker = getGEOIdFromPMID(pmid_ls)
-    print(geo_ids)
+    # print(geo_ids)
     geo_df = pd.DataFrame(columns = ['geo_id', 'geo_accession', 'geo_title', 'geo_summary', 'geo_taxon', 'geo_gdsType', 'geo_n_samples', 'geo_date'])
     for i in geo_ids:
         temp_geo_df = getInfoFromGEO([str(i)])
@@ -482,7 +482,7 @@ def grant_ls_to_geo_info_df(grant_ls):
 # pmid_ls from grant_list_to_pubs_df
 def pmid_ls_to_geo_info_df(pmid_ls):
     geo_ids, pmid_geo_linker = getGEOIdFromPMID(pmid_ls)
-    print(geo_ids)
+    # print(geo_ids)
     geo_df = pd.DataFrame(columns = ['geo_id', 'geo_accession', 'geo_title', 'geo_summary', 'geo_taxon', 'geo_gdsType', 'geo_n_samples', 'geo_date'])
     for i in geo_ids:
         temp_geo_df = getInfoFromGEO([str(i)])
@@ -493,9 +493,9 @@ def pmid_ls_to_geo_info_df(pmid_ls):
 
 
 def get_grant_linker(linker, pmid):
-    print("PMID:" + pmid)
+    # print("PMID:" + pmid)
     if pmid in linker:
-        print("LINKED:" + linker[pmid])
+        # print("LINKED:" + linker[pmid])
         return linker[pmid]
     return ""
 
@@ -576,7 +576,7 @@ def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='gra
     tag_ls = []
     parent_ls = []
     tagged_from_ls = []
-    print('tagging publications ------------------------------------------ ')
+    # print('tagging publications ------------------------------------------ ')
 
     for index, row in pm_icite_df.iterrows():
         tags = [term for term in cts_terms if str(row['pad_mesh']).lower().find(term) > -1 or str(row['pad_keyw']).lower().find(term) > -1 or str(row['pad_title']).lower().find(term) > -1]
@@ -618,7 +618,7 @@ def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='gra
         tagged_from_ls.append(tagged_from)
         parent_ls.append(list(set(parent_tags)))
 
-    print('tagging data -------------------------------------------------- ')
+    # print('tagging data -------------------------------------------------- ')
     data_tag_ls = []
     data_parent_ls = []
     for index, row in data_table.iterrows():
@@ -830,7 +830,7 @@ def pmid_to_pmc_info_df(pmid):
     git_pmc_df = pd.DataFrame(columns=['pmid', 'pmc_id', 'github', 'full_txt', 'start_idx', 'partial_txt'])
     if len(pmc_ids) > 0:
         for pmc_id in pmc_ids:
-            print(pmc_id)
+            # print(pmc_id)
             # temp_pmc_df = getInfoFromPMC(pmc_id) #this does not have pmid yet
             temp_nct_pmc_df, temp_gap_pmc_df, temp_git_pmc_df = getInfoFromPMC(pmc_id) #this does not have pmid yet
             temp_nct_pmc_df['pmid'] = pmid
@@ -894,7 +894,7 @@ def get_clinical_trials_info(nct_id, pmid):
             ]),
         )
     response_json = response.json()
-    print(nct_id)
+    # print(nct_id)
     returned_nct_id = response_json['FullStudiesResponse']['FullStudies'][0]['Study']['ProtocolSection']['IdentificationModule']['NCTId']
     ct_title = response_json['FullStudiesResponse']['FullStudies'][0]['Study']['ProtocolSection']['IdentificationModule']['OfficialTitle']
     ct_summary = response_json['FullStudiesResponse']['FullStudies'][0]['Study']['ProtocolSection']['DescriptionModule']['BriefSummary']
@@ -955,9 +955,9 @@ def nctid_ls_to_clinical_trials_df(nctid_pmid_df):
             try:
                 parent_tags.append(cts_df[cts_df['padlower'] == x]['Parent_name'].values[0])
             except:
-                print('no tag, ct_condition: ', row.ct_condition)
+                # print('no tag, ct_condition: ', row.ct_condition)
                 parent_tags.append('-')
-        print(set(parent_tags))
+        # print(set(parent_tags))
         parent_ls.append(list(set(parent_tags)))
 
     clinical_trials_df = clinical_trials_df.assign(ct_cancer_types_tagged = parent_ls)
@@ -1083,7 +1083,7 @@ def extract_github_info(dataframe):
             else:
                 print(f'Failed to retrieve repository information for {github_url}. Status code: {response.status_code}')
         else:
-            print(f'Invalid GitHub URL: {github_url}')
+            print(f'Invalid GitHub URL: {github_url}, data for this URL not retrieved')
 
     columns = ['pmid', 'github_link', 'repo_name', 'description', 'license', 'version']
     result_df = pd.DataFrame(repo_info, columns=columns)
