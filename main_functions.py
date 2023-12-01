@@ -567,7 +567,7 @@ def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='gra
 
     cts_df = pd.read_csv('terms/NCItm_synonyms_granularparent_1228.csv')
 
-    cts_terms = list(cts_df[(cts_df['abbrev'] != True) | (cts_df['Parent_name'] != 'Other')]['padlower'])
+    cts_terms = list(cts_df[cts_df['Parent_name'] != 'Other']['padlower'])
     # cts_terms = list(cts_df[(cts_df['abbrev'] != True) & (cts_df['Parent_name'] != 'Other')]['padlower'])
     cts_terms.extend([' coronavirus ', ' covid 19 '])
     other_terms = list(cts_df[(cts_df['abbrev'] != True) | (cts_df['Parent_name'] == 'Other')]['padlower'])
@@ -586,18 +586,18 @@ def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='gra
             tags = [term for term in cts_terms if str(row['pad_abstract']).lower().find(term) > -1]
             if len(tags) > 0:
                 tagged_from = '2: abstract'
-        if len(tags) == 0: # check meshterms, title for less descriptive terms ..
-            tags = [term for term in other_terms if str(row['pad_mesh']).lower().find(term) > -1 or str(row['pad_keyw']).lower().find(term) > -1 or str(row['pad_title']).lower().find(term) > -1]
-            if len(tags) > 0:
-                tagged_from = '3: mesh, keyw, title - other terms'
-        if len(tags) == 0:
-            tags = [term for term in other_terms if str(row['pad_abstract']).lower().find(term) > -1]
-            if len(tags) > 0:
-                tagged_from = '4: abstract - other terms'
-        if len(tags) == 0: # check meshterms, title for less descriptive terms ..
-            tags = [term for term in abbr_terms if str(row['pad_mesh']).find(term) > -1 or str(row['pad_keyw']).find(term) > -1 or str(row['pad_title']).find(term) > -1]
-            if len(tags) > 0:
-                tagged_from = '5: mesh, keyw, title - abbrev'
+        # if len(tags) == 0: # check meshterms, title for less descriptive terms ..
+        #     tags = [term for term in other_terms if str(row['pad_mesh']).lower().find(term) > -1 or str(row['pad_keyw']).lower().find(term) > -1 or str(row['pad_title']).lower().find(term) > -1]
+        #     if len(tags) > 0:
+        #         tagged_from = '3: mesh, keyw, title - other terms'
+        # if len(tags) == 0:
+        #     tags = [term for term in other_terms if str(row['pad_abstract']).lower().find(term) > -1]
+        #     if len(tags) > 0:
+        #         tagged_from = '4: abstract - other terms'
+        # if len(tags) == 0: # check meshterms, title for less descriptive terms ..
+        #     tags = [term for term in abbr_terms if str(row['pad_mesh']).find(term) > -1 or str(row['pad_keyw']).find(term) > -1 or str(row['pad_title']).find(term) > -1]
+        #     if len(tags) > 0:
+        #         tagged_from = '5: mesh, keyw, title - abbrev'
 
         if len(tags) == 0:
             tags = ''
@@ -628,7 +628,7 @@ def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='gra
             tags = [term for term in cts_terms if str(row['pad_geo_title']).lower().find(term) > -1 or str(row['pad_geo_summary']).lower().find(term) > -1 or str(row['pad_study_title']).lower().find(term) > -1 or str(row['pad_study_abstract']).lower().find(term) > -1]
 
         if len(tags) == 0:
-            tags = [term for term in other_terms if str(row['pad_sample_attributes']).lower().find(term) > -1]
+            tags = [term for term in cts_terms if str(row['pad_sample_attributes']).lower().find(term) > -1]
         data_tag_ls.append(list(set(tags)))
 
         data_parent_tags = []
@@ -710,16 +710,16 @@ def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='gra
         new_df = data_table[['pmid', 'geo_accession', 'srp_accession']]
     
     if dbgap_filename:
-        new_df['data_title'] = data_table['study_title'].fillna(data_table['geo_title']).fillna(data_table['dbgap_title'])
-        new_df['data_summary'] = data_table['study_abstract'].fillna(data_table['geo_summary']).fillna(data_table['dbgap_desc'])
-        new_df['dbgap_id'] = data_table['dbgap_id']
+        new_df.loc[:, 'data_title'] = data_table['study_title'].fillna(data_table['geo_title']).fillna(data_table['dbgap_title'])
+        new_df.loc[:, 'data_summary'] = data_table['study_abstract'].fillna(data_table['geo_summary']).fillna(data_table['dbgap_desc'])
+        new_df.loc[:, 'dbgap_id'] = data_table['dbgap_id']
     else:
-        new_df['data_title'] = data_table['study_title'].fillna(data_table['geo_title'])
-        new_df['data_summary'] = data_table['study_abstract'].fillna(data_table['geo_summary'])
-    new_df['taxon'] = data_table['geo_taxon'].fillna(data_table['sample_taxon']).fillna('-')
-    new_df['library_strategy'] = data_table['library_strategy']
-    new_df['n_samples'] = data_table['geo_n_samples'].fillna(data_table['sample_srs'])
-    new_df['cancer_type'] = data_table['cancer_tag']
+        new_df.loc[:, 'data_title'] = data_table['study_title'].fillna(data_table['geo_title'])
+        new_df.loc[:, 'data_summary'] = data_table['study_abstract'].fillna(data_table['geo_summary'])
+    new_df.loc[:, 'taxon'] = data_table['geo_taxon'].fillna(data_table['sample_taxon']).fillna('-')
+    new_df.loc[:, 'library_strategy'] = data_table['library_strategy']
+    new_df.loc[:, 'n_samples'] = data_table['geo_n_samples'].fillna(data_table['sample_srs'])
+    new_df.loc[:, 'cancer_type'] = data_table['cancer_tag']
 
     # drop duplicate records by grouping by geoID and sraID, keep all pmids in list and sort so we can order py pmid
     if id_type == 'grant_list':
@@ -933,12 +933,13 @@ def nctid_ls_to_clinical_trials_df(nctid_pmid_df):
     for idx, row in nctid_pmid_df.iterrows():
         pmid, nct_id, returned_nct_id, ct_title, ct_summary, ct_study_type, ct_phase, ct_condition, ct_intervention, ct_intervention_type, ct_intervention_name, ct_keywords, ct_link = get_clinical_trials_info(nct_id=row.nct, pmid=row.pmid )
         temp_row = {'pmid': pmid, 'nct_id': nct_id, 'returned_nct_id': returned_nct_id, 'ct_title': ct_title, 'ct_summary': ct_summary, 'ct_study_type': ct_study_type,'ct_phase': ct_phase, 'ct_condition': ct_condition, 'ct_intervention': ct_intervention, 'ct_intervention_type': ct_intervention_type, 'ct_intervention_name': ct_intervention_name, 'ct_keywords': ct_keywords,  'ct_link': ct_link}
-        clinical_trials_df = clinical_trials_df.append(temp_row, ignore_index = True)
+        clinical_trials_df = pd.concat([clinical_trials_df, temp_row], ignore_index=True)
+        # clinical_trials_df = clinical_trials_df.append(temp_row, ignore_index = True)
     clinical_trials_df['ct_phase'] = [';'.join(map(str, x)) for x in clinical_trials_df['ct_phase']]
     clinical_trials_df['ct_condition'] = [';'.join(map(str, x)) for x in clinical_trials_df['ct_condition']]
     clinical_trials_df['ct_keywords'] = [';'.join(map(str, x)) for x in clinical_trials_df['ct_keywords']]
     
-    cts_df = pd.read_csv('terms/NCItm_synonyms_granularparent_1228.csv')
+    cts_df = pd.read_csv('terms/NCItm_synonyms_granularparent_1228.csv', low_memory=False)
     cts_terms = list(cts_df[(cts_df['abbrev'] != True) & (cts_df['Parent_name'] != 'Other')]['padlower'])
     
     clinical_trials_df['pad_conditions'] = clinical_trials_df['ct_condition'].str.replace('[^\w\s]', ' ').str.replace('  ', ' ')
@@ -997,7 +998,7 @@ def scrape_study_info(url):
                 "title": title,
                 "description": description,
                 "molecular_data": molecular_data,
-                "URL":url
+                "url":url
             }
 
         else:
@@ -1013,10 +1014,10 @@ def scrape_multiple_studies(urls):
         study_info = scrape_study_info(url)
         if "error" not in study_info:
             data.append({
-                "URL": url,
-                "title": study_info["title"],
-                "description": study_info["description"],
-                "molecular data": study_info["molecular_data"]
+                "url": url,
+                "data_title": study_info["title"],
+                "data_summary": study_info["description"],
+                "library_strategy": study_info["molecular_data"]
             })
 
     df = pd.DataFrame(data)
