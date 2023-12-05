@@ -1,0 +1,53 @@
+## To use this action, set NCBI_API_EMAIL, NCBI_API_KEY secrets in the Github project: 
+## Settings->Secrets and variables->Actions->New repository secrets
+
+name: RetriverApp test
+
+on: [push, pull]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        python-version: [3.9, 3.10.11, 3.11, 3.12]
+        arch: ['x64']
+    name: Build and Test on x64 with Python ${{ matrix.python-version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: ${{ matrix.arch }}
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          # This path is specific to Ubuntu
+          path: ~/.cache/pip
+          # Look to see if there is a cache hit for the corresponding requirements file
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            ${{ runner.os }}-        
+      - name: Install dependencies
+        run: |
+          # make sure pip is the lastest
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install --upgrade -r requirements.txt; fi
+      - name: Run retrieverApp
+        env:
+          NCBI_API_EMAIL: ${{ secrets.NCBI_API_EMAIL }}
+          NCBI_API_KEY: ${{ secrets.NCBI_API_KEY }}
+        run: |
+          python get_data.py -grants example_grants.txt
+          mkdir output
+          cp -r retriever_app.html JSON_data custom_text.json output/
+      - name: Archive output
+        uses: actions/upload-artifact@v3
+        with:
+          name: retrieverapp_output
+          path: output/
+
+

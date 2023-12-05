@@ -1,6 +1,8 @@
 # get_data.py requires the following inputs:
 # -grants filepath/to_your/grants.csv file
-# make sure to update the apikey and email in the constants file
+# make sure to update the apikey and email in the environment such as:
+# export NCBI_API_EMAIL="abc@def.ghi"
+# export NCBI_API_KEY="12345"
 
 from main_functions import pmid_ls_to_pmc_info_df, nctid_ls_to_clinical_trials_df, grant_to_output, scrape_multiple_studies, extract_github_info
 
