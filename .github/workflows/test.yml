@@ -3,7 +3,7 @@
 
 name: RetriverApp test
 
-on: [push, pull]
+on: [push, pull_request]
 
 jobs:
   build:
