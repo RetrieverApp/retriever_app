@@ -11,7 +11,6 @@ import os
 import xmltodict
 from datetime import datetime
 import xml.etree.ElementTree as ET
-import constants
 from bs4 import BeautifulSoup
 from requests.exceptions import RequestException
 
@@ -19,8 +18,11 @@ DEFAULT_GROUP_SIZE = 20
 MAX_ATTEMPTS = 3
 DELAY_BETWEEN_ATTEMPTS = 5
 TAG_RE = re.compile(r'<[^>]+>')
-Entrez.email = constants.email
-Entrez.api_key = constants.api_key
+try:
+    Entrez.email = os.environ['NCBI_API_EMAIL']
+    Entrez.api_key = os.environ['NCBI_API_KEY']
+except KeyError:
+    raise Error("Please set environmental variables NCBI_API_EMAIL and NCBI_API_KEY")
 dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 class PublicationData(object):
