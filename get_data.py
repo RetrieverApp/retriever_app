@@ -87,7 +87,7 @@ except:
     print('github api query skipped, will need to do manual check and then run software_search.py')
 
 
-all_dbgap = gap_pmc_df[['pmid', 'pmc_id', 'dbgap', 'pmc_link', 'pubmed_link', 'dbgap_link']].merge(dbgap_data, left_on = 'dbgap_link', right_on = 'URL', how = 'left', indicator= True)
+all_dbgap = gap_pmc_df[['pmid', 'pmc_id', 'dbgap', 'pmc_link', 'pubmed_link', 'dbgap_link']].merge(dbgap_data, left_on = 'dbgap_link', right_on = 'url', how = 'left', indicator= True)
 all_clinical_trials = nct_pmc_df[['pmid', 'pmc_id', 'nct', 'pmc_link', 'pubmed_link', 'ct_link']].merge(ct_data[['nct_id', 'ct_title', 'ct_summary','ct_study_type', 'ct_phase', 'ct_condition', 'ct_intervention', 'ct_intervention_type', 'ct_intervention_name', 'ct_keywords', 'ct_link', 'ct_cancer_types_tagged']], left_on = 'nct', right_on = 'nct_id', how = 'left', indicator= True)
 
 trials_json = all_clinical_trials.to_json(orient='index')
