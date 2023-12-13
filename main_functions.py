@@ -721,7 +721,8 @@ def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='gra
     new_df.loc[:, 'taxon'] = data_table['geo_taxon'].fillna(data_table['sample_taxon']).fillna('-')
     new_df.loc[:, 'library_strategy'] = data_table['library_strategy']
     new_df.loc[:, 'n_samples'] = data_table['geo_n_samples'].fillna(data_table['sample_srs'])
-    new_df.loc[:, 'cancer_type'] = data_table['cancer_tag']
+    # new_df.loc[:, 'cancer_type'] = data_table['cancer_tag']
+    new_df['cancer_type'] = data_table['cancer_tag']
 
     # drop duplicate records by grouping by geoID and sraID, keep all pmids in list and sort so we can order py pmid
     if id_type == 'grant_list':
@@ -935,8 +936,8 @@ def nctid_ls_to_clinical_trials_df(nctid_pmid_df):
     for idx, row in nctid_pmid_df.iterrows():
         pmid, nct_id, returned_nct_id, ct_title, ct_summary, ct_study_type, ct_phase, ct_condition, ct_intervention, ct_intervention_type, ct_intervention_name, ct_keywords, ct_link = get_clinical_trials_info(nct_id=row.nct, pmid=row.pmid )
         temp_row = {'pmid': pmid, 'nct_id': nct_id, 'returned_nct_id': returned_nct_id, 'ct_title': ct_title, 'ct_summary': ct_summary, 'ct_study_type': ct_study_type,'ct_phase': ct_phase, 'ct_condition': ct_condition, 'ct_intervention': ct_intervention, 'ct_intervention_type': ct_intervention_type, 'ct_intervention_name': ct_intervention_name, 'ct_keywords': ct_keywords,  'ct_link': ct_link}
-        clinical_trials_df = pd.concat([clinical_trials_df, temp_row], ignore_index=True)
-        # clinical_trials_df = clinical_trials_df.append(temp_row, ignore_index = True)
+        # clinical_trials_df = pd.concat([clinical_trials_df, temp_row], ignore_index=True)
+        clinical_trials_df = clinical_trials_df.append(temp_row, ignore_index = True)
     clinical_trials_df['ct_phase'] = [';'.join(map(str, x)) for x in clinical_trials_df['ct_phase']]
     clinical_trials_df['ct_condition'] = [';'.join(map(str, x)) for x in clinical_trials_df['ct_condition']]
     clinical_trials_df['ct_keywords'] = [';'.join(map(str, x)) for x in clinical_trials_df['ct_keywords']]
