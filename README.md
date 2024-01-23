@@ -13,23 +13,23 @@ Install dependencies using pip: `pip install -r requirements.txt`
 Note: We recommend using a venv (current testing is with python version ~3.9)
 
 ## Additional setup:
-API key:
-
-Using an API key may be necessary for your use case, depending on how many publications and how much data is associated with them. An API key will also speed up the data requests. 
+In order to use this application you must have an NCBI API Key, which you can get by creating a FREE NCBI account.
 
 To get a key, go to [NCBI](https://account.ncbi.nlm.nih.gov) to create an account or log in.
 
 Go to [account settings](https://account.ncbi.nlm.nih.gov/settings/),
-scroll down to API Key Management, make a copy from
-`constants.py.template` into `constants.py` and copy the key and your
-email into `constants.py` so `api_key = 'your api key'` and `email =
-'your NCBI account email'`
+scroll down to API Key Management to get your key.
 
+Run the following commands to store your variables:
+```
+$ export NCBI_API_EMAIL your_email@example.com
+$ export NCBI_API_KEY your_api_key_here
+```
 
 ## Usage:
 1. Upload a text file with your list of grants (or edit the sample file: `example_grants.txt`)
 
-2. Retrieve your data by specifying the text file which contains your grant list: 
+2. Run the following command to retrieve your data by simply specifying the text file that contains your grant list.
 
 ```
 $ python get_data.py -grants example_grants.txt
