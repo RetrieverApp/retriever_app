@@ -1,6 +1,6 @@
 let custom_text = {
-    network_title: "IOTN example page", 
-    summary_title: "Overall Summary",
+    network_title: "Progress Report", 
+    summary_title: "Summary",
     summary_desc: "This page provides an overview of the network progress. This content is customizable",
     publication_title: "Publications",
     publication_desc: "This page displays information about individual publications. This content is customizable",
