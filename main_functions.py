@@ -505,25 +505,39 @@ def get_grant_linker(linker, pmid):
 # example usage:
 # print(grant_to_output(['ABCD1234567']))
 
-def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='grant_list', dbgap_filename=False):
-# def grant_to_output(grant_ls, output_file='grant_output', write=False, id_type = 'grant_list'):
+def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='grant', dbgap_filename=False, update_only=False):
+# def grant_to_output(grant_ls, output_file='grant_output', write=False, id_type = 'grant'):
     # get pubMed data from list of grants
-    if id_type == 'grant_list':
+    if id_type == 'grant':
         pmid_str, pubmed_df, pmid_ls = grant_list_to_pubs_df(id_ls)
         pubmed_df = pubmed_df.drop(columns=['year'])
         # pubmed_df.to_csv('pub_data.txt', sep='\t') # what is this used for?
         pub_grant_linker = pubmed_df[['pubMedID', 'grant']]
         pub_grant_linker = dict(zip(pubmed_df.pubMedID, pubmed_df.grant))
-        geo_df = pmid_ls_to_geo_info_df(pmid_ls)
-        sra_sample_df = pmid_ls_to_sra_info_df(pmid_ls)
 
         # get icite data and merge on pmid
         icite_df = icite_request(pmid_str)
         pm_icite_df = merge_icite_pubmed(pubmed_df, icite_df)
+        
+        ## start..  these two lines are only for artnet
+        # pm_icite_df = pm_icite_df[pm_icite_df['year'] >= 2022] # this is only for testing ... need to remove this
+        # pmid_ls = list(pm_icite_df['pmid'].astype(str))
+        ## end
+
         pm_icite_df = pm_icite_df.drop(columns= ['pmid']) #keep year from icite bc always consistent
-    elif id_type == 'pmid_list':
+        if update_only is not False:
+            filtered_pm_icite = pm_icite_df[~pm_icite_df['pubMedID'].isin(update_only)]
+            pmid_ls = list(filtered_pm_icite['pubMedID'].astype(str))
+        geo_df = pmid_ls_to_geo_info_df(pmid_ls)
+        sra_sample_df = pmid_ls_to_sra_info_df(pmid_ls)
+
+
+    elif id_type == 'pmid':
         pm_icite_df = pmid_method(id_ls, 200)
         pm_icite_df = pm_icite_df.drop(columns= ['pmid', 'pub']) 
+        if update_only is not False:
+            filtered_pm_icite = pm_icite_df[~pm_icite_df['pubMedID'].isin(update_only)]
+            pmid_ls = list(filtered_pm_icite['pubMedID'].astype(str))
         geo_df = pmid_ls_to_geo_info_df(id_ls)
         sra_sample_df = pmid_ls_to_sra_info_df(id_ls) 
 
@@ -698,7 +712,7 @@ def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='gra
     #########################################
 
     # print(data_table.head())
-    if id_type == 'grant_list':
+    if id_type == 'grant':
         data_table['grant'] = data_table.apply(lambda x: get_grant_linker(pub_grant_linker, str(x['pmid'])), axis=1)
     data_table = pd.merge(data_table, pm_icite_df[['pubMedID', 'parent_tag_pub', 'all_tags_pub']], left_on = 'pmid', right_on = 'pubMedID', how = 'left') #include the tag from the publication
 
@@ -706,7 +720,7 @@ def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='gra
 
     data_table = data_table[data_table.geo_summary != 'This SuperSeries is composed of the SubSeries listed below.']
 
-    if id_type == 'grant_list':
+    if id_type == 'grant':
         new_df = data_table[['pmid', 'geo_accession', 'srp_accession', 'grant']]
     else:
         new_df = data_table[['pmid', 'geo_accession', 'srp_accession']]
@@ -725,7 +739,7 @@ def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='gra
     new_df['cancer_type'] = data_table['cancer_tag']
 
     # drop duplicate records by grouping by geoID and sraID, keep all pmids in list and sort so we can order py pmid
-    if id_type == 'grant_list':
+    if id_type == 'grant':
         if dbgap_filename:
             new_df = new_df.groupby(['geo_accession', 'srp_accession', 'dbgap_id'], as_index=False, dropna=False).agg({'data_title': 'first', 'data_summary': 'first', 'taxon': 'first', 'n_samples': 'first', 'library_strategy': 'first', 'cancer_type': 'first', 'pmid': list, 'grant': list})
         else:
@@ -737,8 +751,12 @@ def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='gra
             new_df = new_df.groupby(['geo_accession', 'srp_accession'], as_index=False, dropna=False).agg({'data_title': 'first', 'data_summary': 'first', 'taxon': 'first', 'n_samples': 'first', 'library_strategy': 'first', 'cancer_type': 'first', 'pmid': list})
 
     new_df['pmid'] = new_df['pmid'].apply(lambda x: list(set(x)))
-    new_df['grant'] = new_df['grant'].apply(lambda x: list(set(x)))
-    new_df['grant'] = [';'.join(map(str, x)) for x in new_df['grant']]
+    if id_type == 'grant':
+        new_df['grant'] = new_df['grant'].apply(lambda x: list(set(x)))
+        new_df['grant'] = [';'.join(map(str, x)) for x in new_df['grant']]
+
+    elif id_type == 'pmid':
+        new_df['grant'] = 'n/a'
     new_df['earliest_pmid'] = [min(x) for x in new_df['pmid']] 
     new_df['pmid_link'] = 'https://pubmed.ncbi.nlm.nih.gov/?term=' + new_df['pmid'].apply(lambda x: '+'.join(x))
     new_df = new_df.sort_values(by = ['earliest_pmid'])
@@ -751,18 +769,18 @@ def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='gra
         geo_df.to_excel(writer, sheet_name='RAW_GEO_table')
         data_table.to_excel(writer, sheet_name='RAW_Data_table')
         writer.save()
-    pub_json = pm_icite_df.to_json(orient='index')
-    data_json = new_df.to_json(orient='index')
-    pub_json_dict = json.loads(pub_json)
-    data_json_dict = json.loads(data_json)
+    # pub_json = pm_icite_df.to_json(orient='index')
+    # data_json = new_df.to_json(orient='index')
+    # pub_json_dict = json.loads(pub_json)
+    # data_json_dict = json.loads(data_json)
 
 
-    with open(f'{output_file}/pub_cite.json', 'w', encoding='utf-8') as f:
-        f.write('let pub_cite_data = ' + json.dumps(pub_json_dict) + ';')
-        f.close()
-    with open(f'{output_file}/data_catalog.json', 'w', encoding='utf-8') as f:
-        f.write('let data_catalog_data = ' + json.dumps(data_json_dict) + ';')
-        f.close()
+    # with open(f'{output_file}/pub_cite.json', 'w', encoding='utf-8') as f:
+    #     f.write('let pub_cite_data = ' + json.dumps(pub_json_dict) + ';')
+    #     f.close()
+    # with open(f'{output_file}/data_catalog.json', 'w', encoding='utf-8') as f:
+    #     f.write('let data_catalog_data = ' + json.dumps(data_json_dict) + ';')
+    #     f.close()
     return pm_icite_df, new_df
 
 ### functions for clinical trials / dbGap tagging:
@@ -782,8 +800,18 @@ def getPMCIdFromPMID(PMID_ls):
 
 
 def getInfoFromPMC(pmc_id, groupSize=DEFAULT_GROUP_SIZE, max_val = 300):    
-    handle = Entrez.efetch(db='pmc', id=pmc_id)
+    try:
+        handle = Entrez.efetch(db='pmc', id=pmc_id)
+
+    except:
+        time.sleep(3)
+        handle = Entrez.efetch(db='pmc', id=pmc_id)
+
     string = handle.read().decode()
+    # print(string)    
+    if 'publisher of this article does not allow downloading of the full text in XML form' in string:
+        print(f'This publication (PMC_ID: {pmc_id}) does not allow downloading of data in XML format. This will need to be manually reviewed. ')    
+    
     root = ET.fromstring(string)
 
     full_txt = ''
@@ -890,42 +918,39 @@ def pmid_ls_to_pmc_info_df(pmid_ls, max_num = 100):
 
 
 # takes one NCT ID and returns 
+# api requests updated to new clincial trials version: https://clinicaltrials.gov/data-api/api (2/15/2024)
 def get_clinical_trials_info(nct_id, pmid):
     response = requests.get(
             "".join([
-                "https://clinicaltrials.gov/api/query/full_studies?expr=", nct_id ,"&fields=NCTId&fmt=JSON"
+                "https://clinicaltrials.gov/api/v2/studies/", nct_id
             ]),
         )
     response_json = response.json()
-    # print(nct_id)
-    returned_nct_id = response_json['FullStudiesResponse']['FullStudies'][0]['Study']['ProtocolSection']['IdentificationModule']['NCTId']
-    ct_title = response_json['FullStudiesResponse']['FullStudies'][0]['Study']['ProtocolSection']['IdentificationModule']['OfficialTitle']
-    ct_summary = response_json['FullStudiesResponse']['FullStudies'][0]['Study']['ProtocolSection']['DescriptionModule']['BriefSummary']
-    
-    ct_study_type = response_json['FullStudiesResponse']['FullStudies'][0]['Study']['ProtocolSection']['DesignModule']['StudyType'] #if observational/expanded access, doesnt have phase
+    returned_nct_id = response_json['protocolSection']['identificationModule']['nctId']
+    ct_title = response_json['protocolSection']['identificationModule']['officialTitle']
+    ct_summary = response_json['protocolSection']['descriptionModule']['briefSummary']
+    ct_study_type = response_json['protocolSection']['designModule']['studyType']
     try:
-    
-        ct_phase = response_json['FullStudiesResponse']['FullStudies'][0]['Study']['ProtocolSection']['DesignModule']['PhaseList']['Phase']
+        ct_phase = response_json['protocolSection']['designModule']['phases']
     except:
         ct_phase = ct_study_type.split(',')
-    ct_condition = response_json['FullStudiesResponse']['FullStudies'][0]['Study']['ProtocolSection']['ConditionsModule']['ConditionList']['Condition']
+    ct_condition = response_json['protocolSection']['conditionsModule']['conditions']
     ct_intervention_type = ''
     ct_intervention_name = ''
     ct_intervention = ''
     if ct_phase != ['Observational']:
-        for i in response_json['FullStudiesResponse']['FullStudies'][0]['Study']['ProtocolSection']['ArmsInterventionsModule']['InterventionList']['Intervention']:
-            ct_intervention_type = ct_intervention_type + i['InterventionType']+ ";"
-            ct_intervention_name = ct_intervention_name + i['InterventionName'] + ";"
-            ct_intervention = ct_intervention + f"{i['InterventionType']}: {i['InterventionName']};"
+        for i in response_json['protocolSection']['armsInterventionsModule']['interventions']:
+            ct_intervention_type = ct_intervention_type + i['type']+ ";"
+            ct_intervention_name = ct_intervention_name + i['name'] + ";"
+            ct_intervention = ct_intervention + f"{i['type']}: {i['name']};"
     else:
         ct_intervention_type = 'Observational'
         ct_intervention_name = 'Observational'
         ct_intervention = 'Observational'
     try:
-        ct_keywords = response_json['FullStudiesResponse']['FullStudies'][0]['Study']['ProtocolSection']['ConditionsModule']['KeywordList']['Keyword']
+        ct_keywords = response_json['protocolSection']['conditionsModule']['keywords']
     except:
         ct_keywords = ''
-    # ct_link = f"https://clinicaltrials.gov/ct2/show/{nct_id}"
     ct_link = f"https://clinicaltrials.gov/study/{nct_id}"
     return pmid, nct_id, returned_nct_id, ct_title, ct_summary, ct_study_type, ct_phase, ct_condition, ct_intervention, ct_intervention_type, ct_intervention_name, ct_keywords, ct_link
 
@@ -936,15 +961,16 @@ def nctid_ls_to_clinical_trials_df(nctid_pmid_df):
     for idx, row in nctid_pmid_df.iterrows():
         pmid, nct_id, returned_nct_id, ct_title, ct_summary, ct_study_type, ct_phase, ct_condition, ct_intervention, ct_intervention_type, ct_intervention_name, ct_keywords, ct_link = get_clinical_trials_info(nct_id=row.nct, pmid=row.pmid )
         temp_row = {'pmid': pmid, 'nct_id': nct_id, 'returned_nct_id': returned_nct_id, 'ct_title': ct_title, 'ct_summary': ct_summary, 'ct_study_type': ct_study_type,'ct_phase': ct_phase, 'ct_condition': ct_condition, 'ct_intervention': ct_intervention, 'ct_intervention_type': ct_intervention_type, 'ct_intervention_name': ct_intervention_name, 'ct_keywords': ct_keywords,  'ct_link': ct_link}
-        # clinical_trials_df = pd.concat([clinical_trials_df, temp_row], ignore_index=True)
-        clinical_trials_df = clinical_trials_df.append(temp_row, ignore_index = True)
+        temp_df = pd.DataFrame([temp_row])
+        clinical_trials_df = pd.concat([clinical_trials_df, temp_df], ignore_index=True)
+
+        # clinical_trials_df = clinical_trials_df.append(temp_row, ignore_index = True)
     clinical_trials_df['ct_phase'] = [';'.join(map(str, x)) for x in clinical_trials_df['ct_phase']]
     clinical_trials_df['ct_condition'] = [';'.join(map(str, x)) for x in clinical_trials_df['ct_condition']]
     clinical_trials_df['ct_keywords'] = [';'.join(map(str, x)) for x in clinical_trials_df['ct_keywords']]
     
     cts_df = pd.read_csv('terms/NCItm_synonyms_granularparent_1228.csv', low_memory=False)
     cts_terms = list(cts_df[(cts_df['abbrev'] != True) & (cts_df['Parent_name'] != 'Other')]['padlower'])
-    
     clinical_trials_df['pad_conditions'] = clinical_trials_df['ct_condition'].str.replace('[^\w\s]', ' ').str.replace('  ', ' ')
     clinical_trials_df['pad_conditions'] = ' ' + clinical_trials_df['pad_conditions'] + ' '
     clinical_trials_df['pad_title'] = clinical_trials_df['ct_title'].str.replace('[^\w\s]', ' ').str.replace('  ', ' ')
@@ -1103,7 +1129,7 @@ def extract_github_info(dataframe):
 
 # example usage
 if __name__ == "__main__":
-    # pubs, data = grant_to_output(['32571799'], output_file='grant_output', write=True, id_type = 'pmid_list')
+    # pubs, data = grant_to_output(['32571799'], output_file='grant_output', write=True, id_type = 'pmid')
     pubs, data = grant_to_output(['U01DE029255'])
     print(pubs.head())
     print(data.head())
