@@ -31,17 +31,17 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
             ${{ runner.os }}-        
-      - name: Install dependencies
+      - name: Install
         run: |
           # make sure pip is the lastest
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install --upgrade -r requirements.txt; fi
+          python -m pip install .
       - name: Run retrieverApp
         env:
           NCBI_API_EMAIL: ${{ secrets.NCBI_API_EMAIL }}
           NCBI_API_KEY: ${{ secrets.NCBI_API_KEY }}
         run: |
-          python get_data.py -grants example_grants.txt
+          retriever_get -grants example_grants.txt
           mkdir output
           cp -r retriever_app.html JSON_data custom_text.json output/
       - name: Archive output

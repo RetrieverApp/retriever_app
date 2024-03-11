@@ -8,7 +8,10 @@ Clone github files locally: `git clone
 https://github.com/philippadoherty/retriever_app.git` and change
 working directory: `cd retriever_app`.
 
-Install dependencies using pip: `pip install -r requirements.txt`
+Install dependencies using pip: `pip install .`
+
+After installation, you should be able to access two command line
+tools -- `retriever_get` and `retriever_refresh`.
 
 Note: We recommend using a venv (current testing is with python version ~3.9)
 
@@ -22,17 +25,17 @@ scroll down to API Key Management to get your key.
 
 Run the following commands to store your variables:
 ```
-$ export NCBI_API_EMAIL your_email@example.com
-$ export NCBI_API_KEY your_api_key_here
+$ export NCBI_API_EMAIL=your_email@example.com
+$ export NCBI_API_KEY=your_api_key_here
 ```
 
 ## Usage:
-1. Upload a text file with your list of grants (or edit the sample file: `example_grants.txt`)
+1. Go to your working directory, and create a text file with your list of grants (or edit the sample file: `example_grants.txt`)
 
 2. Run the following command to retrieve your data by simply specifying the text file that contains your grant list.
 
 ```
-$ python get_data.py -grants example_grants.txt
+$ retriever_get -grants example_grants.txt
 ```
 
 3. Navigate to the html file, `retriever_app.html`, in a browser to see the data summaries and tables.
@@ -43,7 +46,7 @@ $ python get_data.py -grants example_grants.txt
 
 2. To apply these changes run the following command: 
 
-`python refresh_data.py -f file_name` to update the file that has been modified.
+`retriever_refresh -f file_name` to update the file that has been modified.
 
 `-f` options are 
 * `data_catalog`, 
@@ -54,7 +57,7 @@ $ python get_data.py -grants example_grants.txt
 
 Specify the file name without the file extension: 
 ```
-$ python refresh.py -f data_catalog
+$ retriever_refresh -f data_catalog
 ```
 
 

@@ -1,5 +1,6 @@
 # before pushing ... remove api key, email from this file, make sure library tagging script is most up-to-date ...
 import requests
+from importlib import resources
 import pandas as pd
 # from ast import keyword
 from Bio import Entrez
@@ -567,7 +568,8 @@ def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='gra
     pm_icite_df['pad_mesh'] = pm_icite_df['meshterms'].str.replace("'", " ' ")
     pm_icite_df['pad_keyw'] = pm_icite_df['keywords'].str.replace("'", " ' ")
 
-    cts_df = pd.read_csv('terms/NCItm_synonyms_granularparent_1228.csv')
+    with resources.path('retrieverapp.terms', 'NCItm_synonyms_granularparent_1228.csv') as datafile:
+        cts_df = pd.read_csv(datafile, low_memory=False)
 
     cts_terms = list(cts_df[cts_df['Parent_name'] != 'Other']['padlower'])
     # cts_terms = list(cts_df[(cts_df['abbrev'] != True) & (cts_df['Parent_name'] != 'Other')]['padlower'])
@@ -654,7 +656,9 @@ def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='gra
     #########################################
     # library strategy tagging if 'nan' or 'Other' ... can we pull a tag from the GEO or SRA title?
     #########################################
-    strategy_df = pd.read_csv('terms/library_strategy_tag.csv')
+    with resources.path('retrieverapp.terms', 'library_strategy_tag.csv') as datafile:    
+        strategy_df = pd.read_csv(datafile)
+    
     strategy_terms = list(strategy_df['tagged_terms_lower'])
     sc_tags = ['single-cell', 'single cell', 'singlecell']
     # just grab all tags from the titles ... (summary gives too many false positives) .. only overwrite them if the original was nan or other or if scRNA or scATAC
@@ -941,8 +945,9 @@ def nctid_ls_to_clinical_trials_df(nctid_pmid_df):
     clinical_trials_df['ct_phase'] = [';'.join(map(str, x)) for x in clinical_trials_df['ct_phase']]
     clinical_trials_df['ct_condition'] = [';'.join(map(str, x)) for x in clinical_trials_df['ct_condition']]
     clinical_trials_df['ct_keywords'] = [';'.join(map(str, x)) for x in clinical_trials_df['ct_keywords']]
-    
-    cts_df = pd.read_csv('terms/NCItm_synonyms_granularparent_1228.csv', low_memory=False)
+
+    with resources.path('retrieverapp.terms', 'NCItm_synonyms_granularparent_1228.csv') as datafile:
+        cts_df = pd.read_csv(datafile, low_memory=False)
     cts_terms = list(cts_df[(cts_df['abbrev'] != True) & (cts_df['Parent_name'] != 'Other')]['padlower'])
     
     clinical_trials_df['pad_conditions'] = clinical_trials_df['ct_condition'].str.replace('[^\w\s]', ' ').str.replace('  ', ' ')
@@ -1092,13 +1097,6 @@ def extract_github_info(dataframe):
     columns = ['pmid', 'github_link', 'repo_name', 'description', 'license', 'version']
     result_df = pd.DataFrame(repo_info, columns=columns)
     return result_df
-
-
-
-
-
-
-
 
 
 # example usage
