@@ -1,0 +1,3 @@
+include src/retrieverapp/terms/*.csv
+include src/retrieverapp/template/*.html
+include src/retrieverapp/template/*.json

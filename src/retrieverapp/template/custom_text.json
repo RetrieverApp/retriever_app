@@ -1,0 +1,13 @@
+let custom_text = {
+    network_title: "Progress Report", 
+    summary_title: "Summary",
+    summary_desc: "This page provides an overview of the network progress. This content is customizable",
+    publication_title: "Publications",
+    publication_desc: "This page displays information about individual publications. This content is customizable",
+    data_title: "Data Catalog",
+    data_desc: "This page provides a catalog of data associated with this network. This content is customizable",
+    clinical_trials_title: "Clinical Trials Catalog",
+    clinical_trials_desc: "This page displays information about clinical trials. This content is customizable",
+    software_title: "Software Catalog",
+    software_desc: "This page displays information about software packages and workflows associated with this network. This content is customizable"
+    };

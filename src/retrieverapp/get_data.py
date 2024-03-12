@@ -10,6 +10,8 @@ import argparse
 import os
 import pandas as pd
 import json
+import shutil
+from importlib import resources
 
 def main():
     parser = argparse.ArgumentParser(description='get_data.py will use your grantlist .txt file as input and will output several JSON and Excel files into the output folder. This will take a while.')
@@ -185,6 +187,18 @@ def main():
     with open(f'{json_folder}/software_catalog.json', 'w', encoding='utf-8') as f:
         f.write('let github_data = ' + json.dumps(github_json_dict) + ';')
         f.close()
+
+    # now copy over the html file
+    with resources.path('retrieverapp.template', 'retriever_app.html') as htmlfile:
+        # Copy the file to the current working directory
+        shutil.copy(htmlfile, '.')
+    
+    # now copy over the custome text file
+    with resources.path('retrieverapp.template', 'custom_text.json') as cjsonfile:
+        # Copy the file to the current working directory
+        shutil.copy(cjsonfile, '.')
+    
+        
 
 if __name__ == "__main__":
     main()        

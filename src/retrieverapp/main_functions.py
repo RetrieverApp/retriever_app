@@ -23,7 +23,7 @@ try:
     Entrez.email = os.environ['NCBI_API_EMAIL']
     Entrez.api_key = os.environ['NCBI_API_KEY']
 except KeyError:
-    raise Error("Please set environmental variables NCBI_API_EMAIL and NCBI_API_KEY")
+    raise Exception("Please set environmental variables NCBI_API_EMAIL and NCBI_API_KEY")
 dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 class PublicationData(object):
