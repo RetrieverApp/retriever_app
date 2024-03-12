@@ -9,7 +9,6 @@ include-package-data = true
 namespaces = true
 where = ["src"]
 
-
 [project]
 name = "RetrieverApp"
 version = "0.1.0"
