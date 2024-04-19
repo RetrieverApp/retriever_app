@@ -6,6 +6,9 @@
 
 from retrieverapp.main_functions import pmid_ls_to_pmc_info_df, nctid_ls_to_clinical_trials_df, grant_to_output, scrape_multiple_studies, extract_github_info
 
+import logging
+import retrieverapp.Logger
+
 import argparse
 import os
 import pandas as pd
@@ -15,17 +18,37 @@ from importlib import resources
 
 def main():
     parser = argparse.ArgumentParser(description='get_data.py will use your grantlist .txt file as input and will output several JSON and Excel files into the output folder. This will take a while.')
-    parser.add_argument('-ids', type=str, help='This should be the path and filename to your ID list: filepath/to_your/ids.txt')
-    parser.add_argument('-type', type=str, choices=['pmid', 'grant'], help='This is to specify the ID type, options are pmid or grant')
-    parser.add_argument('-update-only', type=str, default=False, help='This option requires you to have output files from a previous run. The input for this will be the path to your sheets_for_editing folder.')
+    parser.add_argument( '-f', '--ids-file', dest = 'ids_file', required = True,
+                         type=str,
+                         help='This should be the path and filename to your ID list: filepath/to_your/ids.txt')
+    parser.add_argument( '-t', '--type', dest = 'type', default = 'grant', required = False,
+                         type=str, choices=['pmid', 'grant'],
+                         help='This is to specify the ID type, options are "pmid" for PubMed ids or "grant" for NIH grant ids. Default: grant')
+    parser.add_argument( '-U', '--update-only', dest = "update_only",
+                         type=str, default=False,
+                         help='This option requires you to have output files from a previous run. The input for this will be the path to your sheets_for_editing folder.')
+    
     args = parser.parse_args()
-    ids_file = args.ids
+
+    # logging functions
+    logger = logging.getLogger(__name__)    
+    verbose = 2                           # set this to 3 to show debug info
+    logger.setLevel((4-verbose)*10)
+    error   = logger.critical        # function alias
+    warn    = logger.warning
+    debug   = logger.debug
+    info    = logger.info
+
+    ids_file = args.ids_file
     id_type = args.type
     update_only_path = args.update_only
-    print(update_only_path)
+
+    info(f"IDs filename: {ids_file}")
+    info(f"IDs type: {id_type}")
+    info(f"Update Only: {update_only_path}")
 
     if not os.path.isfile(ids_file):
-        print(f"Error: The file path '{ids_file}' is not valid or the file does not exist.")
+        error(f"The file path '{ids_file}' is not valid or the file does not exist.")
         exit(1)  # Exit the script with a non-zero status code to indicate an error
 
     ids = []
@@ -33,12 +56,12 @@ def main():
         for line in file:
             # Remove any leading/trailing white spaces
             ids.append(line.strip())
+    info(f"IDs to be retrieved: {ids}")    
 
-    print(ids)
 
     if update_only_path: # need to add a few methods here
         if not os.path.isfile(update_only_path+'/sheets_for_editing/pub_cite.xlsx'):
-            print(f"Error: The file path '{update_only_path}' is not valid or the file does not exist. Make sure you are pointing to where a 'sheets_for_editing' folder that was generated from a previous 'get_data()' run.")
+            error(f"Error: The file path '{update_only_path}' is not valid or the file does not exist. Make sure you are pointing to where a 'sheets_for_editing' folder that was generated from a previous 'get_data()' run.")
             exit(1)
         old_pub_cite = pd.read_excel(update_only_path+'/sheets_for_editing/pub_cite.xlsx')
         old_data_catalog = pd.read_excel(update_only_path+'/sheets_for_editing/data_catalog.xlsx')
@@ -55,9 +78,9 @@ def main():
     #consider dealing with case where someone wants to generate files for multiple projects
     if not os.path.exists(json_folder_path):
         os.makedirs(json_folder_path)
-        print(f"Folder 'JSON_data' created at {json_folder_path}")
+        info(f"Folder 'JSON_data' created at {json_folder_path}")
     else:
-        print(f"Folder 'JSON_data' already exists at {json_folder_path}, consider renaming or moving this?")
+        warn(f"Folder 'JSON_data' already exists at {json_folder_path}, consider renaming or moving this?")
     #---------------------------------------------------------------------------------------------------------------------------
     # pull pubmed, icite, SRA, GEO from Entrez
     #---------------------------------------------------------------------------------------------------------------------------
@@ -74,9 +97,9 @@ def main():
     #consider dealing with case where someone wants to generate files for multiple projects
     if not os.path.exists(excel_folder_path):
         os.makedirs(excel_folder_path)
-        print(f"Folder 'sheets_for_editing' created at {excel_folder_path}")
+        info(f"Folder 'sheets_for_editing' created at {excel_folder_path}")
     else:
-        print(f"Folder 'sheets_for_editing' already exists at {excel_folder_path}, consider renaming or moving this?")
+        warn(f"Folder 'sheets_for_editing' already exists at {excel_folder_path}, consider renaming or moving this?")
 
     #---------------------------------------------------------------------------------------------------------------------------
     # Scrape PMC text for clinical trials IDs, dbgap IDs, github repositories
@@ -124,7 +147,7 @@ def main():
             github_data['display'] = "y"
 
         except:
-            print('github api query skipped, will need to do manual check and then run software_search.py')
+            warn('github api query skipped, will need to do manual check and then run software_search.py')
 
         git_pmc_df['display'] = "y"
         git_pmc_df[['pmid', 'pmc_id', 'github', 'pmc_link', 'pubmed_link', 'display']].to_excel('sheets_for_editing/potential_softwares.xlsx', sheet_name='github', index=False)
@@ -198,7 +221,7 @@ def main():
         # Copy the file to the current working directory
         shutil.copy(cjsonfile, '.')
     
-        
+    info("All done!")
 
 if __name__ == "__main__":
     main()        

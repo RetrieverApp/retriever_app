@@ -14,6 +14,8 @@ from datetime import datetime
 import xml.etree.ElementTree as ET
 from bs4 import BeautifulSoup
 from requests.exceptions import RequestException
+import logging
+import sys
 
 DEFAULT_GROUP_SIZE = 20
 MAX_ATTEMPTS = 3
@@ -25,6 +27,18 @@ try:
 except KeyError:
     raise Exception("Please set environmental variables NCBI_API_EMAIL and NCBI_API_KEY")
 dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# logging functions
+import retrieverapp.Logger
+
+# logging functions
+logger = logging.getLogger(__name__)
+verbose = 2                           # set this to 3 to show debug info
+logger.setLevel((4-verbose)*10)
+error   = logger.critical        # function alias
+warn    = logger.warning
+debug   = logger.debug
+info    = logger.info
 
 class PublicationData(object):
     def __init__(self, pubMedID, title, abstract, formattedTitle, keywords, meshterms, authors, issue, volume, pub, pub_full, day, month, year, affiliations, clinical_trials, grant):
@@ -49,7 +63,7 @@ def removeHTML(text):
 
 #function retrieves PubMed publications from grant number
 def getPublicationsForGrant(grant, groupSize=DEFAULT_GROUP_SIZE):
-    print(grant)
+    info(f"Gather inforation for the grant: {grant}")
     pubs = []
     with contextlib.closing(Entrez.esearch(
         db='pubmed', usehistory='y', retmax='1', term='{}[Grant Number]'.format(grant)
@@ -68,12 +82,12 @@ def getPublicationsForGrant(grant, groupSize=DEFAULT_GROUP_SIZE):
                     break
             except HTTPError as err:
                 if 500 <= err.code <= 599:
-                    print(u'Received error {} from server on attempt {} of {}'.format(err.code, attempt, MAX_ATTEMPTS))
+                    error(u'Received error {} from server on attempt {} of {}'.format(err.code, attempt, MAX_ATTEMPTS))
                     time.sleep(DELAY_BETWEEN_ATTEMPTS)
                 else:
                     raise
         else:
-            print(u'Too many attempts and Entrez keeps giving 500s')
+            error(u'Too many attempts and Entrez keeps giving 500s')
             return
         for p in records[u'PubmedArticle']:
             pubMedID = str(p[u'MedlineCitation'][u'PMID'])
@@ -87,7 +101,7 @@ def getPublicationsForGrant(grant, groupSize=DEFAULT_GROUP_SIZE):
             meshterms = []
             for term in meshtermslist:
                 meshterms.append(str(term[u'DescriptorName']))
-            # print(meshterms)
+            debug(meshterms)
 
             abst = p[u'MedlineCitation'][u'Article'].get(u'Abstract')
             if abst:
@@ -120,7 +134,7 @@ def getPublicationsForGrant(grant, groupSize=DEFAULT_GROUP_SIZE):
             
             try:
                 if p[u'MedlineCitation'][u'Article'][u'DataBankList']:
-                    # print(p[u'MedlineCitation'][u'Article'][u'DataBankList'])
+                    debug(p[u'MedlineCitation'][u'Article'][u'DataBankList'])
                     if p[u'MedlineCitation'][u'Article'][u'DataBankList'][0]['DataBankName'] == 'ClinicalTrials.gov':
                         clinical_trials = p[u'MedlineCitation'][u'Article'][u'DataBankList'][0].get(u'AccessionNumberList', u'')
                         clinical_trials = list(set(clinical_trials))
@@ -145,7 +159,7 @@ def getPublicationsForPMID_ls(PMID_ls, groupSize=301):
         db='pubmed', id=PMID_ls
     )) as handle:
         results = Entrez.read(handle)
-    # print(results)
+    debug(results)
     webEnv, queryKey = results['WebEnv'], results['QueryKey']
     for start in range(0, max_val, groupSize):
         attempt = 0
@@ -159,12 +173,12 @@ def getPublicationsForPMID_ls(PMID_ls, groupSize=301):
                     break
             except HTTPError as err:
                 if 500 <= err.code <= 599:
-                    print(u'Received error {} from server on attempt {} of {}'.format(err.code, attempt, MAX_ATTEMPTS))
+                    error(u'Received error {} from server on attempt {} of {}'.format(err.code, attempt, MAX_ATTEMPTS))
                     time.sleep(DELAY_BETWEEN_ATTEMPTS)
                 else:
                     raise
         else:
-            print(u'Too many attempts and Entrez keeps giving 500s')
+            error(u'Too many attempts and Entrez keeps giving 500s')
             return
     for p in records[u'PubmedArticle']:
         pubMedID = str(p[u'MedlineCitation'][u'PMID'])
@@ -282,7 +296,7 @@ def pmid_method(pmid_list, max_num): #max_num  should not be > 500, groupSize sh
         pmid_string = ",".join(pmid_list)
     else:
         pmid_string = ",".join(pmid_list)
-        # print(pmid_string)
+        debug(pmid_string)
         pubmed_df = pmid_string_to_pubs_df(pmid_string)
         pubmed_df = pubmed_df.drop(columns=['year'])
     icite_df = icite_request(pmid_string)
@@ -405,7 +419,7 @@ def pmid_to_sra_info_df(pmid):
     sra_df = pd.DataFrame(columns=['pmid', 'sra_db_id', 'srp_accession', 'gse_refname', 'sample_srs', 'sample_gsm', 'sample_title', 'sample_taxon', 'library_strategy', 'library_source', 'library_selection', 'library_construction_protocol', 'study_title', 'study_abstract', 'sample_attributes', 'sra_link', 'sra_date'])
     if len(sra_ids) > 0:
         for sra_id in sra_ids:
-            # print(sra_id)
+            debug(sra_id)
             temp_sra_df = getInfoFromSRA(sra_id)
             new_row = {'pmid': pmid, 'sra_db_id': temp_sra_df['sra_db_id'][0] ,'srp_accession': temp_sra_df['srp_accession'][0], 'gse_refname': temp_sra_df['gse_refname'][0], 'sample_srs': temp_sra_df['sample_srs'][0], 'sample_gsm':temp_sra_df['sample_gsm'][0], 'sample_title': temp_sra_df['sample_title'][0], 'sample_taxon': temp_sra_df['sample_taxon'][0], 'library_strategy': temp_sra_df['library_strategy'][0], 'library_source': temp_sra_df['library_source'][0], 'library_selection': temp_sra_df['library_selection'][0], 'library_construction_protocol': temp_sra_df['library_construction_protocol'][0], 'study_title': temp_sra_df['study_title'][0], 'study_abstract': temp_sra_df['study_abstract'][0], 'sample_attributes': temp_sra_df['sample_attributes'][0], 'sra_link': temp_sra_df['sra_link'][0], 'sra_date': temp_sra_df['sra_date'][0]}
             sra_df = pd.concat([sra_df, pd.DataFrame(new_row, columns=sra_df.columns, index=[0])], ignore_index=True)
@@ -438,7 +452,7 @@ def getGEOIdFromPMID(pmid_ls):
             results = Entrez.read(handle)
         try:
             for e in results[0]['LinkSetDb'][0]['Link']:
-                # print(e)
+                debug(e)
                 geo_ids.append(e['Id'])
                 new_row = {'pmid': pmid, 'geo_db_id':e['Id']}
                 pmid_geo_linker = pd.concat([pmid_geo_linker, pd.DataFrame(new_row, columns=pmid_geo_linker.columns, index=[0])], ignore_index=True)
@@ -459,7 +473,7 @@ def getInfoFromGEO(string_of_geo_ids):
         accession = str(safeget(r, 'Accession'))
         title = str(safeget(r, 'title'))
         summary = str(safeget(r, 'summary'))
-        # print(summary)
+        debug(summary)
         taxon = str(safeget(r, 'taxon'))
         gdsType = str(safeget(r, 'gdsType'))
         n_samples = str(r['n_samples'].real)
@@ -473,7 +487,7 @@ def grant_ls_to_geo_info_df(grant_ls):
     pmid_str, pubmed_df, pmid_ls = grant_list_to_pubs_df(grant_ls)
     # pmid_ls = list(pubmed_df['pubMedID'].astype(str))
     geo_ids, pmid_geo_linker = getGEOIdFromPMID(pmid_ls)
-    # print(geo_ids)
+    debug(geo_ids)
     geo_df = pd.DataFrame(columns = ['geo_id', 'geo_accession', 'geo_title', 'geo_summary', 'geo_taxon', 'geo_gdsType', 'geo_n_samples', 'geo_date'])
     for i in geo_ids:
         temp_geo_df = getInfoFromGEO([str(i)])
@@ -485,7 +499,7 @@ def grant_ls_to_geo_info_df(grant_ls):
 # pmid_ls from grant_list_to_pubs_df
 def pmid_ls_to_geo_info_df(pmid_ls):
     geo_ids, pmid_geo_linker = getGEOIdFromPMID(pmid_ls)
-    # print(geo_ids)
+    debug(geo_ids)
     geo_df = pd.DataFrame(columns = ['geo_id', 'geo_accession', 'geo_title', 'geo_summary', 'geo_taxon', 'geo_gdsType', 'geo_n_samples', 'geo_date'])
     for i in geo_ids:
         temp_geo_df = getInfoFromGEO([str(i)])
@@ -496,9 +510,9 @@ def pmid_ls_to_geo_info_df(pmid_ls):
 
 
 def get_grant_linker(linker, pmid):
-    # print("PMID:" + pmid)
+    debug("PMID:" + pmid)
     if pmid in linker:
-        # print("LINKED:" + linker[pmid])
+        debug("LINKED:" + linker[pmid])
         return linker[pmid]
     return ""
 
@@ -546,7 +560,7 @@ def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='gra
     sra_df = sra_sample_df.groupby(['pmid', 'srp_accession', 'gse_refname'], as_index=False, dropna=False).agg({'sample_srs': 'count', 'library_strategy': 'first', 'library_source': 'first', 'library_selection': 'first', 'study_title': 'first', 'study_abstract': 'first', 'sample_taxon': 'first', 'sample_attributes': 'first', 'sra_date': 'first'})
     geo_df = geo_df.drop_duplicates(keep='first', ignore_index=True)
     data_table = pd.merge(geo_df, sra_df, left_on = 'geo_accession', right_on = 'gse_refname', how = 'outer') #outer join to include SRA records without GEO ids
-    # print(data_table.columns)
+    debug(data_table.columns)
     data_table = data_table.drop_duplicates(keep='first', ignore_index=True)
     data_table['pmid'] = data_table['pmid_x'].fillna(data_table['pmid_y'])
     #add condition for dbgap file
@@ -555,32 +569,32 @@ def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='gra
         dbgap_df = dbgap_df.rename(columns={'pmid_d': 'pmid', 'dbgap_data_type': 'library_strategy'})
         # this merge actually needs to be a concat ... will have lots of blank rows 
         data_table = pd.concat([data_table, dbgap_df], join='outer', ignore_index=True)
-        data_table['pad_dbgap_title'] = data_table['dbgap_title'].str.replace('[^\w\s]', ' ', regex = True).str.replace('  ', ' ')
+        data_table['pad_dbgap_title'] = data_table['dbgap_title'].str.replace('[^\w\s]', ' ', regex = True).str.replace('  ', ' ', regex = True)
         data_table['pad_dbgap_title'] = ' ' + data_table['pad_dbgap_title'] + ' '
-        data_table['pad_dbgap_desc'] = data_table['dbgap_desc'].str.replace('[^\w\s]', ' ', regex = True).str.replace('  ', ' ')
+        data_table['pad_dbgap_desc'] = data_table['dbgap_desc'].str.replace('[^\w\s]', ' ', regex = True).str.replace('  ', ' ', regex = True)
         data_table['pad_dbgap_desc'] = ' ' + data_table['pad_dbgap_desc'] + ' '
-        data_table['pad_dbgap_cancer_type'] = data_table['dbgap_cancer_type'].str.replace('[^\w\s]', ' ', regex = True).str.replace('  ', ' ')
+        data_table['pad_dbgap_cancer_type'] = data_table['dbgap_cancer_type'].str.replace('[^\w\s]', ' ', regex = True).str.replace('  ', ' ', regex = True)
         data_table['pad_dbgap_cancer_type'] = ' ' + data_table['pad_dbgap_cancer_type'] + ' '
 
     # perform cancer tagging#########
     #add some padded cols to the data_table dataframe
-    data_table['pad_geo_title'] = data_table['geo_title'].str.replace('[^\w\s]', ' ', regex = True).str.replace('  ', ' ')
+    data_table['pad_geo_title'] = data_table['geo_title'].str.replace('[^\w\s]', ' ', regex = True).str.replace('  ', ' ', regex = True)
     data_table['pad_geo_title'] = ' ' + data_table['pad_geo_title'] + ' '
-    data_table['pad_geo_summary'] = data_table['geo_summary'].str.replace('[^\w\s]', ' ', regex = True).str.replace('  ', ' ')
+    data_table['pad_geo_summary'] = data_table['geo_summary'].str.replace('[^\w\s]', ' ', regex = True).str.replace('  ', ' ', regex = True)
     data_table['pad_geo_summary'] = ' ' + data_table['pad_geo_summary'] + ' '
-    data_table['pad_study_title'] = data_table['study_title'].str.replace('[^\w\s]', ' ', regex = True).str.replace('  ', ' ')
+    data_table['pad_study_title'] = data_table['study_title'].str.replace('[^\w\s]', ' ', regex = True).str.replace('  ', ' ', regex = True)
     data_table['pad_study_title'] = ' ' + data_table['pad_study_title'] + ' '
-    data_table['pad_study_abstract'] = data_table['study_abstract'].str.replace('[^\w\s]', ' ', regex = True).str.replace('  ', ' ')
+    data_table['pad_study_abstract'] = data_table['study_abstract'].str.replace('[^\w\s]', ' ', regex = True).str.replace('  ', ' ', regex = True)
     data_table['pad_study_abstract'] = ' ' + data_table['pad_study_abstract'] + ' '
-    data_table['pad_sample_attributes'] = data_table['sample_attributes'].str.replace('[^\w\s]', ' ', regex = True).str.replace('  ', ' ')
+    data_table['pad_sample_attributes'] = data_table['sample_attributes'].str.replace('[^\w\s]', ' ', regex = True).str.replace('  ', ' ', regex = True)
 
     #add some padded cols to the pub dataframe
-    pm_icite_df['pad_abstract'] = pm_icite_df['abstract'].str.replace('[^\w\s]', ' ', regex = True).str.replace('  ', ' ')
+    pm_icite_df['pad_abstract'] = pm_icite_df['abstract'].str.replace('[^\w\s]', ' ', regex = True).str.replace('  ', ' ', regex = True)
     pm_icite_df['pad_abstract'] = ' ' + pm_icite_df['pad_abstract'] + ' '
-    pm_icite_df['pad_title'] = pm_icite_df['title'].str.replace('[^\w\s]', ' ', regex = True).str.replace('  ', ' ')
+    pm_icite_df['pad_title'] = pm_icite_df['title'].str.replace('[^\w\s]', ' ', regex = True).str.replace('  ', ' ', regex = True)
     pm_icite_df['pad_title'] = ' ' + pm_icite_df['pad_title'] + ' '
-    pm_icite_df['pad_mesh'] = pm_icite_df['meshterms'].str.replace("'", " ' ")
-    pm_icite_df['pad_keyw'] = pm_icite_df['keywords'].str.replace("'", " ' ")
+    pm_icite_df['pad_mesh'] = pm_icite_df['meshterms'].str.replace("'", " ' ", regex = True)
+    pm_icite_df['pad_keyw'] = pm_icite_df['keywords'].str.replace("'", " ' ", regex = True)
 
     with resources.path('retrieverapp.terms', 'NCItm_synonyms_granularparent_1228.csv') as datafile:
         cts_df = pd.read_csv(datafile, low_memory=False)
@@ -594,7 +608,7 @@ def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='gra
     tag_ls = []
     parent_ls = []
     tagged_from_ls = []
-    # print('tagging publications ------------------------------------------ ')
+    debug('tagging publications ------------------------------------------ ')
 
     for index, row in pm_icite_df.iterrows():
         tags = [term for term in cts_terms if str(row['pad_mesh']).lower().find(term) > -1 or str(row['pad_keyw']).lower().find(term) > -1 or str(row['pad_title']).lower().find(term) > -1]
@@ -636,7 +650,7 @@ def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='gra
         tagged_from_ls.append(tagged_from)
         parent_ls.append(list(set(parent_tags)))
 
-    # print('tagging data -------------------------------------------------- ')
+    debug('tagging data -------------------------------------------------- ')
     data_tag_ls = []
     data_parent_ls = []
     for index, row in data_table.iterrows():
@@ -715,19 +729,22 @@ def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='gra
                 data_table.at[index, 'library_strategy'] = 'Other'           
     #########################################
 
-    # print(data_table.head())
+    debug(data_table.head())
     if id_type == 'grant':
         data_table['grant'] = data_table.apply(lambda x: get_grant_linker(pub_grant_linker, str(x['pmid'])), axis=1)
     data_table = pd.merge(data_table, pm_icite_df[['pubMedID', 'parent_tag_pub', 'all_tags_pub']], left_on = 'pmid', right_on = 'pubMedID', how = 'left') #include the tag from the publication
 
-    data_table['cancer_tag'] = data_table['parent_tag_data'].where(data_table['parent_tag_data'].str.len() > 0, "['N/A']")
-
+    # this won't work if there is no 'data'
+    if data_table.size > 0:
+        data_table['cancer_tag'] = data_table['parent_tag_data'].where(data_table['parent_tag_data'].str.len() > 0, ['N/A'])
+    else:
+        data_table['cancer_tag'] = []
     data_table = data_table[data_table.geo_summary != 'This SuperSeries is composed of the SubSeries listed below.']
 
     if id_type == 'grant':
-        new_df = data_table[['pmid', 'geo_accession', 'srp_accession', 'grant']]
+        new_df = data_table[['pmid', 'geo_accession', 'srp_accession', 'grant']].copy()
     else:
-        new_df = data_table[['pmid', 'geo_accession', 'srp_accession']]
+        new_df = data_table[['pmid', 'geo_accession', 'srp_accession']].copy()
     
     if dbgap_filename:
         new_df.loc[:, 'data_title'] = data_table['study_title'].fillna(data_table['geo_title']).fillna(data_table['dbgap_title'])
@@ -739,8 +756,8 @@ def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='gra
     new_df.loc[:, 'taxon'] = data_table['geo_taxon'].fillna(data_table['sample_taxon']).fillna('-')
     new_df.loc[:, 'library_strategy'] = data_table['library_strategy']
     new_df.loc[:, 'n_samples'] = data_table['geo_n_samples'].fillna(data_table['sample_srs'])
-    # new_df.loc[:, 'cancer_type'] = data_table['cancer_tag']
-    new_df['cancer_type'] = data_table['cancer_tag']
+    new_df.loc[:, 'cancer_type'] = data_table['cancer_tag']
+    #new_df['cancer_type'] = data_table['cancer_tag']
 
     # drop duplicate records by grouping by geoID and sraID, keep all pmids in list and sort so we can order py pmid
     if id_type == 'grant':
@@ -762,7 +779,8 @@ def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='gra
     elif id_type == 'pmid':
         new_df['grant'] = 'n/a'
     new_df['earliest_pmid'] = [min(x) for x in new_df['pmid']] 
-    new_df['pmid_link'] = 'https://pubmed.ncbi.nlm.nih.gov/?term=' + new_df['pmid'].apply(lambda x: '+'.join(x))
+    #pmid is float type
+    new_df['pmid_link'] = 'https://pubmed.ncbi.nlm.nih.gov/?term=' + new_df['pmid'].apply(lambda x: '+'.join(str(x)))
     new_df = new_df.sort_values(by = ['earliest_pmid'])
     if write:
         writer = pd.ExcelWriter(f'{output_file}.xlsx', engine='xlsxwriter')
@@ -814,7 +832,7 @@ def getInfoFromPMC(pmc_id, groupSize=DEFAULT_GROUP_SIZE, max_val = 300):
     string = handle.read().decode()
     # print(string)    
     if 'publisher of this article does not allow downloading of the full text in XML form' in string:
-        print(f'This publication (PMC_ID: {pmc_id}) does not allow downloading of data in XML format. This will need to be manually reviewed. ')    
+        warn(f'This publication (PMC_ID: {pmc_id}) does not allow downloading of data in XML format. This will need to be manually reviewed. ')    
     
     root = ET.fromstring(string)
 
@@ -865,7 +883,7 @@ def pmid_to_pmc_info_df(pmid):
     git_pmc_df = pd.DataFrame(columns=['pmid', 'pmc_id', 'github', 'full_txt', 'start_idx', 'partial_txt'])
     if len(pmc_ids) > 0:
         for pmc_id in pmc_ids:
-            # print(pmc_id)
+            debug(pmc_id)
             # temp_pmc_df = getInfoFromPMC(pmc_id) #this does not have pmid yet
             temp_nct_pmc_df, temp_gap_pmc_df, temp_git_pmc_df = getInfoFromPMC(pmc_id) #this does not have pmid yet
             temp_nct_pmc_df['pmid'] = pmid
@@ -976,11 +994,11 @@ def nctid_ls_to_clinical_trials_df(nctid_pmid_df):
     with resources.path('retrieverapp.terms', 'NCItm_synonyms_granularparent_1228.csv') as datafile:
         cts_df = pd.read_csv(datafile, low_memory=False)
     cts_terms = list(cts_df[(cts_df['abbrev'] != True) & (cts_df['Parent_name'] != 'Other')]['padlower'])
-    clinical_trials_df['pad_conditions'] = clinical_trials_df['ct_condition'].str.replace('[^\w\s]', ' ').str.replace('  ', ' ')
+    clinical_trials_df['pad_conditions'] = clinical_trials_df['ct_condition'].str.replace('[^\w\s]', ' ', regex=True).str.replace('  ', ' ', regex=True)
     clinical_trials_df['pad_conditions'] = ' ' + clinical_trials_df['pad_conditions'] + ' '
-    clinical_trials_df['pad_title'] = clinical_trials_df['ct_title'].str.replace('[^\w\s]', ' ').str.replace('  ', ' ')
+    clinical_trials_df['pad_title'] = clinical_trials_df['ct_title'].str.replace('[^\w\s]', ' ', regex=True).str.replace('  ', ' ', regex=True)
     clinical_trials_df['pad_title'] = ' ' + clinical_trials_df['pad_title'] + ' '
-    clinical_trials_df['pad_keywords'] = clinical_trials_df['ct_keywords'].str.replace('[^\w\s]', ' ').str.replace('  ', ' ')
+    clinical_trials_df['pad_keywords'] = clinical_trials_df['ct_keywords'].str.replace('[^\w\s]', ' ', regex=True).str.replace('  ', ' ', regex=True)
     clinical_trials_df['pad_keywords'] = ' ' + clinical_trials_df['pad_keywords'] + ' '
     parent_ls = []
     for index, row in clinical_trials_df.iterrows():
@@ -990,9 +1008,9 @@ def nctid_ls_to_clinical_trials_df(nctid_pmid_df):
             try:
                 parent_tags.append(cts_df[cts_df['padlower'] == x]['Parent_name'].values[0])
             except:
-                # print('no tag, ct_condition: ', row.ct_condition)
+                debug('no tag, ct_condition: ', row.ct_condition)
                 parent_tags.append('-')
-        # print(set(parent_tags))
+        debug(set(parent_tags))
         parent_ls.append(list(set(parent_tags)))
 
     clinical_trials_df = clinical_trials_df.assign(ct_cancer_types_tagged = parent_ls)
@@ -1081,7 +1099,7 @@ def extract_github_info(dataframe):
                 reset_time = int(response.headers['X-RateLimit-Reset'])
                 wait_time = reset_time - int(time.time()) + 1  # Add 1 second to be safe
 
-                print(f'Received 403 error. Waiting for {wait_time} seconds until rate limit reset.')
+                warn(f'Received 403 error. Waiting for {wait_time} seconds until rate limit reset.')
                 time.sleep(wait_time)
                 
                 response = requests.get(f'https://api.github.com/repos/{username}/{repository}')
@@ -1102,7 +1120,7 @@ def extract_github_info(dataframe):
                     reset_time = int(releases_response.headers['X-RateLimit-Reset'])
                     wait_time = reset_time - int(time.time()) + 1  # Add 1 second to be safe
 
-                    print(f'Received 403 error. Waiting for {wait_time} seconds until rate limit reset.')
+                    warn(f'Received 403 error. Waiting for {wait_time} seconds until rate limit reset.')
                     time.sleep(wait_time)
                     releases_response = requests.get(f'https://api.github.com/repos/{username}/{repository}/releases/latest')
                     releases_data = releases_response.json()
@@ -1116,9 +1134,9 @@ def extract_github_info(dataframe):
 
                 repo_info.append([row['pmid'], row['github'], repo_name, description, license_name, version])
             else:
-                print(f'Failed to retrieve repository information for {github_url}. Status code: {response.status_code}')
+                warn(f'Failed to retrieve repository information for {github_url}. Status code: {response.status_code}')
         else:
-            print(f'Invalid GitHub URL: {github_url}, data for this URL not retrieved')
+            warn(f'Invalid GitHub URL: {github_url}, data for this URL not retrieved')
 
     columns = ['pmid', 'github_link', 'repo_name', 'description', 'license', 'version']
     result_df = pd.DataFrame(repo_info, columns=columns)
