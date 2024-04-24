@@ -41,7 +41,7 @@ jobs:
           NCBI_API_EMAIL: ${{ secrets.NCBI_API_EMAIL }}
           NCBI_API_KEY: ${{ secrets.NCBI_API_KEY }}
         run: |
-          retriever_get -ids example_grants.txt -type grant
+          retriever_get -f example_grants.txt -t grant
           mkdir output
           cp -r retriever_app.html JSON_data custom_text.json output/
       - name: Archive output
