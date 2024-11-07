@@ -4,7 +4,7 @@
 # export NCBI_API_EMAIL="abc@def.ghi"
 # export NCBI_API_KEY="12345"
 
-from retrieverapp.main_functions import pmid_ls_to_pmc_info_df, nctid_ls_to_clinical_trials_df, grant_to_output, scrape_multiple_studies, extract_github_info
+from retrieverapp.main_functions import pmid_ls_to_pmc_info_df, nctid_ls_to_clinical_trials_df, grant_to_output, scrape_multiple_studies, extract_github_info, retrieve_ai_tags
 
 import logging
 import retrieverapp.Logger
@@ -15,6 +15,9 @@ import pandas as pd
 import json
 import shutil
 from importlib import resources
+import retrieverappAI
+from retrieverappAI import retriever_sniff
+import sys
 
 def main():
     parser = argparse.ArgumentParser(description='get_data.py will use your grantlist .txt file as input and will output several JSON and Excel files into the output folder. This will take a while.')
@@ -27,6 +30,16 @@ def main():
     parser.add_argument( '-U', '--update-only', dest = "update_only",
                          type=str, default=False,
                          help='This option requires you to have output files from a previous run. The input for this will be the path to your sheets_for_editing folder.')
+    
+    parser.add_argument( '-a', '--ai-tagging', dest = "ai_tagging",
+                         type=str, default=False,
+                         help='Testing: implement ai tagging')
+
+    parser.add_argument("-x", dest = "ai_max_n", type = int, default = 5, help = "Maximum number of values per sample metadata. Default: 5")
+    parser.add_argument("-l", dest="ai_lib", type=str, default="mlx", choices=("hf", "mlx"), help="Choose the backend library to use, from 'mlx' and 'hf'. Please note that, if the backend is mlx, the model from `-m` should be a mlx-compatible model. DEFAULT:hf")
+    # parser.add_argument("-d", dest="device", type=str, default="mps", help="The device to be used when using huggingface/hf backend. If the backend is MLX, this option has no effect. Examples of choices are 'mps', or 'cuda'. DEFAULT:mps")
+    parser.add_argument("-m", dest="ai_model", type=str, required=True, help="The model being used. REQUIRED.")
+
     
     args = parser.parse_args()
 
@@ -42,10 +55,15 @@ def main():
     ids_file = args.ids_file
     id_type = args.type
     update_only_path = args.update_only
+    ai_tagging = args.ai_tagging
+    ai_max_n = args.ai_max_n
+    ai_lib = args.ai_lib
+    ai_llm = args.ai_model
 
     info(f"IDs filename: {ids_file}")
     info(f"IDs type: {id_type}")
     info(f"Update Only: {update_only_path}")
+    info(f"AI tagging: {ai_tagging}")
 
     if not os.path.isfile(ids_file):
         error(f"The file path '{ids_file}' is not valid or the file does not exist.")
@@ -70,7 +88,6 @@ def main():
         old_software_catalog = pd.read_excel(update_only_path+'/sheets_for_editing/software_catalog.xlsx')
 
         old_pmids = old_pub_cite['pubMedID']
-        #also change options: project name, how can we copy the html file locally? 
 
     current_directory = os.getcwd()
     json_folder = 'JSON_data'
@@ -88,7 +105,7 @@ def main():
         update_only = old_pmids
     else:
         update_only=False
-    pub_cite_df, data_catalog_df = grant_to_output(ids, output_file=json_folder, write=False, id_type=id_type, dbgap_filename=False, update_only=update_only)
+    pub_cite_df, data_catalog_df = grant_to_output(ids, output_file=json_folder, id_type=id_type, update_only=update_only)
     pub_cite_df['display'] = "y"
     data_catalog_df['display'] = "y" 
 
@@ -167,6 +184,17 @@ def main():
         all_dbgap = pd.concat([old_dbgap, all_dbgap], ignore_index=True)
         all_clinical_trials = pd.concat([old_clinical_trials, all_clinical_trials], ignore_index=True)
         github_data = pd.concat([old_software_catalog, github_data], ignore_index=True)
+
+
+    #---------------------------------------------------------------------------------------------------------------------------
+    # if ai-tagging = true, add _ai columns to data_catalog output
+    #---------------------------------------------------------------------------------------------------------------------------
+    if ai_tagging:
+        gse_ids = data_catalog_df['geo_accession'].unique().tolist()
+        # ai_tags_df = retrieve_ai_tags(gse_ids, max_n=5, llm='biomisc/mlx_retrieverapp_orig', lib='mlx') #add options to arg parser
+        ai_tags_df = retrieve_ai_tags(gse_ids, max_n=ai_max_n, llm=ai_llm, lib=ai_lib) #add options to arg parser
+        # need to add 'device' from retriever sniff options ... 
+        data_catalog_df = pd.merge(data_catalog_df, ai_tags_df, on='geo_accession', how='left')
 
 
     #---------------------------------------------------------------------------------------------------------------------------
