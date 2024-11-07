@@ -16,6 +16,7 @@ from bs4 import BeautifulSoup
 from requests.exceptions import RequestException
 import logging
 import sys
+import retrieverappAI
 
 DEFAULT_GROUP_SIZE = 20
 MAX_ATTEMPTS = 3
@@ -63,7 +64,7 @@ def removeHTML(text):
 
 #function retrieves PubMed publications from grant number
 def getPublicationsForGrant(grant, groupSize=DEFAULT_GROUP_SIZE):
-    info(f"Gather inforation for the grant: {grant}")
+    info(f"Gather information for the grant: {grant}")
     pubs = []
     with contextlib.closing(Entrez.esearch(
         db='pubmed', usehistory='y', retmax='1', term='{}[Grant Number]'.format(grant)
@@ -520,8 +521,7 @@ def get_grant_linker(linker, pmid):
 # example usage:
 # print(grant_to_output(['ABCD1234567']))
 
-def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='grant', dbgap_filename=False, update_only=False):
-# def grant_to_output(grant_ls, output_file='grant_output', write=False, id_type = 'grant'):
+def grant_to_output(id_ls, output_file='json_folder', id_type='grant', update_only=False):
     # get pubMed data from list of grants
     if id_type == 'grant':
         pmid_str, pubmed_df, pmid_ls = grant_list_to_pubs_df(id_ls)
@@ -533,11 +533,6 @@ def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='gra
         # get icite data and merge on pmid
         icite_df = icite_request(pmid_str)
         pm_icite_df = merge_icite_pubmed(pubmed_df, icite_df)
-        
-        ## start..  these two lines are only for artnet
-        # pm_icite_df = pm_icite_df[pm_icite_df['year'] >= 2022] # this is only for testing ... need to remove this
-        # pmid_ls = list(pm_icite_df['pmid'].astype(str))
-        ## end
 
         pm_icite_df = pm_icite_df.drop(columns= ['pmid']) #keep year from icite bc always consistent
         if update_only is not False:
@@ -556,27 +551,14 @@ def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='gra
         geo_df = pmid_ls_to_geo_info_df(id_ls)
         sra_sample_df = pmid_ls_to_sra_info_df(id_ls) 
 
-    # sra_df = sra_sample_df.drop_duplicates(subset = ['pmid', 'srp_accession', 'gse_refname'], keep='first')[['pmid', 'srp_accession', 'gse_refname', 'library_strategy', 'library_source', 'library_selection', 'study_title', 'study_abstract', 'sample_taxon', 'sample_attributes', 'sra_date']]
     sra_df = sra_sample_df.groupby(['pmid', 'srp_accession', 'gse_refname'], as_index=False, dropna=False).agg({'sample_srs': 'count', 'library_strategy': 'first', 'library_source': 'first', 'library_selection': 'first', 'study_title': 'first', 'study_abstract': 'first', 'sample_taxon': 'first', 'sample_attributes': 'first', 'sra_date': 'first'})
     geo_df = geo_df.drop_duplicates(keep='first', ignore_index=True)
     data_table = pd.merge(geo_df, sra_df, left_on = 'geo_accession', right_on = 'gse_refname', how = 'outer') #outer join to include SRA records without GEO ids
     debug(data_table.columns)
     data_table = data_table.drop_duplicates(keep='first', ignore_index=True)
     data_table['pmid'] = data_table['pmid_x'].fillna(data_table['pmid_y'])
-    #add condition for dbgap file
-    if dbgap_filename:
-        dbgap_df = pd.read_excel(dbgap_filename, dtype=str)
-        dbgap_df = dbgap_df.rename(columns={'pmid_d': 'pmid', 'dbgap_data_type': 'library_strategy'})
-        # this merge actually needs to be a concat ... will have lots of blank rows 
-        data_table = pd.concat([data_table, dbgap_df], join='outer', ignore_index=True)
-        data_table['pad_dbgap_title'] = data_table['dbgap_title'].str.replace('[^\w\s]', ' ', regex = True).str.replace('  ', ' ', regex = True)
-        data_table['pad_dbgap_title'] = ' ' + data_table['pad_dbgap_title'] + ' '
-        data_table['pad_dbgap_desc'] = data_table['dbgap_desc'].str.replace('[^\w\s]', ' ', regex = True).str.replace('  ', ' ', regex = True)
-        data_table['pad_dbgap_desc'] = ' ' + data_table['pad_dbgap_desc'] + ' '
-        data_table['pad_dbgap_cancer_type'] = data_table['dbgap_cancer_type'].str.replace('[^\w\s]', ' ', regex = True).str.replace('  ', ' ', regex = True)
-        data_table['pad_dbgap_cancer_type'] = ' ' + data_table['pad_dbgap_cancer_type'] + ' '
 
-    # perform cancer tagging#########
+        # perform cancer tagging#########
     #add some padded cols to the data_table dataframe
     data_table['pad_geo_title'] = data_table['geo_title'].str.replace('[^\w\s]', ' ', regex = True).str.replace('  ', ' ', regex = True)
     data_table['pad_geo_title'] = ' ' + data_table['pad_geo_title'] + ' '
@@ -654,10 +636,10 @@ def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='gra
     data_tag_ls = []
     data_parent_ls = []
     for index, row in data_table.iterrows():
-        if dbgap_filename:
-            tags = [term for term in cts_terms if str(row['pad_geo_title']).lower().find(term) > -1 or str(row['pad_geo_summary']).lower().find(term) > -1 or str(row['pad_study_title']).lower().find(term) > -1 or str(row['pad_study_abstract']).lower().find(term) > -1 or str(row['pad_dbgap_title']).lower().find(term) > -1 or str(row['pad_dbgap_desc']).lower().find(term) > -1 or str(row['pad_dbgap_cancer_type']).lower().find(term) > -1]
-        else:
-            tags = [term for term in cts_terms if str(row['pad_geo_title']).lower().find(term) > -1 or str(row['pad_geo_summary']).lower().find(term) > -1 or str(row['pad_study_title']).lower().find(term) > -1 or str(row['pad_study_abstract']).lower().find(term) > -1]
+        # if dbgap_filename:
+        #     tags = [term for term in cts_terms if str(row['pad_geo_title']).lower().find(term) > -1 or str(row['pad_geo_summary']).lower().find(term) > -1 or str(row['pad_study_title']).lower().find(term) > -1 or str(row['pad_study_abstract']).lower().find(term) > -1 or str(row['pad_dbgap_title']).lower().find(term) > -1 or str(row['pad_dbgap_desc']).lower().find(term) > -1 or str(row['pad_dbgap_cancer_type']).lower().find(term) > -1]
+        # else:
+        tags = [term for term in cts_terms if str(row['pad_geo_title']).lower().find(term) > -1 or str(row['pad_geo_summary']).lower().find(term) > -1 or str(row['pad_study_title']).lower().find(term) > -1 or str(row['pad_study_abstract']).lower().find(term) > -1]
 
         if len(tags) == 0:
             tags = [term for term in cts_terms if str(row['pad_sample_attributes']).lower().find(term) > -1]
@@ -729,9 +711,12 @@ def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='gra
                 data_table.at[index, 'library_strategy'] = 'Other'           
     #########################################
 
+    
+
     debug(data_table.head())
     if id_type == 'grant':
         data_table['grant'] = data_table.apply(lambda x: get_grant_linker(pub_grant_linker, str(x['pmid'])), axis=1)
+    
     data_table = pd.merge(data_table, pm_icite_df[['pubMedID', 'parent_tag_pub', 'all_tags_pub']], left_on = 'pmid', right_on = 'pubMedID', how = 'left') #include the tag from the publication
 
     # this won't work if there is no 'data'
@@ -746,13 +731,8 @@ def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='gra
     else:
         new_df = data_table[['pmid', 'geo_accession', 'srp_accession']].copy()
     
-    if dbgap_filename:
-        new_df.loc[:, 'data_title'] = data_table['study_title'].fillna(data_table['geo_title']).fillna(data_table['dbgap_title'])
-        new_df.loc[:, 'data_summary'] = data_table['study_abstract'].fillna(data_table['geo_summary']).fillna(data_table['dbgap_desc'])
-        new_df.loc[:, 'dbgap_id'] = data_table['dbgap_id']
-    else:
-        new_df.loc[:, 'data_title'] = data_table['study_title'].fillna(data_table['geo_title'])
-        new_df.loc[:, 'data_summary'] = data_table['study_abstract'].fillna(data_table['geo_summary'])
+    new_df.loc[:, 'data_title'] = data_table['study_title'].fillna(data_table['geo_title'])
+    new_df.loc[:, 'data_summary'] = data_table['study_abstract'].fillna(data_table['geo_summary'])
     new_df.loc[:, 'taxon'] = data_table['geo_taxon'].fillna(data_table['sample_taxon']).fillna('-')
     new_df.loc[:, 'library_strategy'] = data_table['library_strategy']
     new_df.loc[:, 'n_samples'] = data_table['geo_n_samples'].fillna(data_table['sample_srs'])
@@ -761,15 +741,9 @@ def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='gra
 
     # drop duplicate records by grouping by geoID and sraID, keep all pmids in list and sort so we can order py pmid
     if id_type == 'grant':
-        if dbgap_filename:
-            new_df = new_df.groupby(['geo_accession', 'srp_accession', 'dbgap_id'], as_index=False, dropna=False).agg({'data_title': 'first', 'data_summary': 'first', 'taxon': 'first', 'n_samples': 'first', 'library_strategy': 'first', 'cancer_type': 'first', 'pmid': list, 'grant': list})
-        else:
-            new_df = new_df.groupby(['geo_accession', 'srp_accession'], as_index=False, dropna=False).agg({'data_title': 'first', 'data_summary': 'first', 'taxon': 'first', 'n_samples': 'first', 'library_strategy': 'first', 'cancer_type': 'first', 'pmid': list, 'grant': list})
+        new_df = new_df.groupby(['geo_accession', 'srp_accession'], as_index=False, dropna=False).agg({'data_title': 'first', 'data_summary': 'first', 'taxon': 'first', 'n_samples': 'first', 'library_strategy': 'first', 'cancer_type': 'first', 'pmid': list, 'grant': list})
     else:
-        if dbgap_filename:
-            new_df = new_df.groupby(['geo_accession', 'srp_accession', 'dbgap_id'], as_index=False, dropna=False).agg({'data_title': 'first', 'data_summary': 'first', 'taxon': 'first', 'n_samples': 'first', 'library_strategy': 'first', 'cancer_type': 'first', 'pmid': list})
-        else:    
-            new_df = new_df.groupby(['geo_accession', 'srp_accession'], as_index=False, dropna=False).agg({'data_title': 'first', 'data_summary': 'first', 'taxon': 'first', 'n_samples': 'first', 'library_strategy': 'first', 'cancer_type': 'first', 'pmid': list})
+        new_df = new_df.groupby(['geo_accession', 'srp_accession'], as_index=False, dropna=False).agg({'data_title': 'first', 'data_summary': 'first', 'taxon': 'first', 'n_samples': 'first', 'library_strategy': 'first', 'cancer_type': 'first', 'pmid': list})
 
     new_df['pmid'] = new_df['pmid'].apply(lambda x: list(set(x)))
     if id_type == 'grant':
@@ -777,32 +751,11 @@ def grant_to_output(id_ls, output_file='grant_output', write=False, id_type='gra
         new_df['grant'] = [';'.join(map(str, x)) for x in new_df['grant']]
 
     elif id_type == 'pmid':
-        new_df['grant'] = 'n/a'
+        new_df['grant'] = 'n/a' # can we capture Grant IDs?
     new_df['earliest_pmid'] = [min(x) for x in new_df['pmid']] 
     #pmid is float type
     new_df['pmid_link'] = 'https://pubmed.ncbi.nlm.nih.gov/?term=' + new_df['pmid'].apply(lambda x: '+'.join(str(x)))
     new_df = new_df.sort_values(by = ['earliest_pmid'])
-    if write:
-        writer = pd.ExcelWriter(f'{output_file}.xlsx', engine='xlsxwriter')
-        pm_icite_df.to_excel(writer, sheet_name='Publication_Citation_table')
-        new_df.to_excel(writer, sheet_name= 'Data_table')
-        sra_df.to_excel(writer, sheet_name='RAW_SRA_Summary_table')
-        sra_sample_df.to_excel(writer, sheet_name='RAW_SRA_Sample_table')
-        geo_df.to_excel(writer, sheet_name='RAW_GEO_table')
-        data_table.to_excel(writer, sheet_name='RAW_Data_table')
-        writer.save()
-    # pub_json = pm_icite_df.to_json(orient='index')
-    # data_json = new_df.to_json(orient='index')
-    # pub_json_dict = json.loads(pub_json)
-    # data_json_dict = json.loads(data_json)
-
-
-    # with open(f'{output_file}/pub_cite.json', 'w', encoding='utf-8') as f:
-    #     f.write('let pub_cite_data = ' + json.dumps(pub_json_dict) + ';')
-    #     f.close()
-    # with open(f'{output_file}/data_catalog.json', 'w', encoding='utf-8') as f:
-    #     f.write('let data_catalog_data = ' + json.dumps(data_json_dict) + ';')
-    #     f.close()
     return pm_icite_df, new_df
 
 ### functions for clinical trials / dbGap tagging:
@@ -1142,6 +1095,65 @@ def extract_github_info(dataframe):
     result_df = pd.DataFrame(repo_info, columns=columns)
     return result_df
 
+import io
+import os
+import tempfile
+from tqdm import tqdm
+from glob import glob
+from retrieverappAI.download_SOFT import get_remote_path, download_files_via_https
+from retrieverappAI.extract_SOFT import extract_series_data_orig
+from retrieverappAI.utils import gse_dict_to_prompt
+
+def retrieve_ai_tags(gse_ids, max_n, llm, lib):
+    if lib == "mlx":
+        from retrieverappAI.batch_infer_MLX import infer
+    else:
+        from retrieverappAI.batch_infer_HF import infer
+    
+    output_list = []
+    with tempfile.TemporaryDirectory() as output_dir_path, \
+         tempfile.NamedTemporaryFile(mode="w+", delete_on_close=True) as tmpf_infer:
+
+        if gse_ids:
+            remote_paths = get_remote_path(gse_ids)
+            # download
+            download_files_via_https(remote_paths, output_dir_path, skip_existing_files=True)
+            gse_id_dir = output_dir_path
+        # else:
+        #     gse_id_dir = args.id_dir
+
+        # make prompt
+        gse_list = []
+        for filename in tqdm(glob(os.path.join(gse_id_dir, "*.soft")) +
+                             glob(os.path.join(gse_id_dir, "*.soft.gz")),
+                             desc="Parsing GEO SOFT files"):
+            gse_dict = extract_series_data_orig(filename, max_n)
+            if gse_dict==None:
+                print(f"No sample can be found in {filename}, skipped...")
+                continue
+            gse_list.append(gse_dict["series gse accession"])
+            data_to_write = gse_dict_to_prompt(gse_dict)
+            tmpf_infer.write(json.dumps(data_to_write) + '\n')
+        tmpf_infer.file.seek(0)
+        # infer
+        tmpf_out = io.StringIO()
+        infer(tmpf_infer.name, tmpf_out, llm, None, 8092)
+        # report
+        tmpf_out.seek(0)
+        
+        for this_l in tmpf_out:
+            c = json.loads(json.loads(this_l)["completion"])
+            c = {x: json.loads(c[x]) for x in c.keys()}
+            gse = gse_list.pop(0)
+            output = {}
+            output['series gse accession'] = gse
+            output.update(c)
+            output_list.append(output)
+
+        ai_tagged_df = pd.DataFrame(output_list) # colnames will be: organism >> taxon_ai, data_type >> library_strategy_ai, merge on 'series gse accession' and 'geo_accession'
+        ai_tagged_df = ai_tagged_df.rename(columns={'organism':'taxon_ai', 'data_type':'library_strategy_ai', 'series gse accession': 'geo_accession'})
+    
+    return ai_tagged_df
 
 # example usage
 if __name__ == "__main__":
